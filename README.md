@@ -1,7 +1,2 @@
 # bacteria
-open data about bacteria
-
-
-# test (fork)
-
-###Ilya makes a change. 
+Bacterial traits and human disease outcomes

@@ -4,97 +4,87 @@ author: "Ilya"
 date: "12/7/2018"
 output: github_document
 ---
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+####To do:
+Correct taxonomy in Barberan et al. 2017.
 
-####install packages
+Add code reading in GIDEON data from other Rmd file. 
+
+
+#Bacterial traits and human disease outcomes
+
+##Strategy
+Integrate data on host species, pathogen species, pathogen traits, and human disease outcomes. 
+
+Apply generalized boosted models (GBM) to predict human disease outcomes based on bacterial traits. 
+
+##Data sources
+1. GIDEON dataset of ungulate hosts and zoonotic diseases
+2. Dataset relating mammals to pathogens (GMPD)
+3. Bacterial trait datasets (Brbic et al. 2016; Barberan et al. 2017) 
+4. Human disease outcomes (GIDEON): case fatality rates, outbreak size, prevalence 5. Ungulate host ranges (IUCN)
+
+##Study design
+
+####install and load required packages
 ```{r packages, echo=FALSE}
-pkgTest <- function(x)
-{
-  if (x %in% rownames(installed.packages()) == FALSE) {
-    install.packages(x, dependencies= TRUE)    
-  }
-  library(x, character.only = TRUE)
-}
-neededPackages <- c("data.table", "dplyr", "reshape2", "corrplot", "RColorBrewer")
-
-for (package in neededPackages){pkgTest(package)}
-
+source("packages_bacteria.R")
 ```
 
 
+###Data: bacterial traits
 
+####Bacterial traits: read in and save Brbic et al. 2016 
+Source: ProTraits: http://protraits.irb.hr/data.html. 
+We are using version of data in which traits have been binarized. 
+Read in data and save as p1.Rdata. 
+```{r read_data_pathogen_traits1}
+source("read_data_pathogen_traits1.R")
+```
 
-####read in data from Brbic et al. (ProTraits: http://protraits.irb.hr/data.html)
+####Bacterial traits: correct taxonomy in Brbic et al. 2016 data
+Output data to file (species.csv) to upload to NCBI website (https://www.ncbi.nlm.nih.gov/Taxonomy/TaxIdentifier/tax_identifier.cgi). After running taxonomy_ncbi.R, go to NCBI website, upload species.csv, and choose option to save to file from website. Save file to working directory. 
+```{r taxonomy_ncbi}
+source("taxonomy_ncbi.R")
+```
+
+Read back in file outputted from NCBI website ("tax_report.txt"). Merge tax_report.txt with p1 (original Brbic et al. data), with new field "preferred.name"
+```{r taxonomy_ncbi_out}
+source("taxonomy_ncbi_out.R")
+```
+
+Also attempted, didn't work: Attempted with R package taxize fxn synonyms and "col" (Catalog of Life). Note: taxize does not include NCBI. This requires a lot of interaction for species with multiple matches.  
 ```{r}
-PT = fread("ProTraits_precisionScores.txt",blank.lines.skip=TRUE)
-# PT[1,]
-names(PT)
-unique(PT$Phenotype)
+# source("taxonomy1.R")
+```
 
-# PT_wide = reshape(PT, idvar = "Organism_name", timevar = "Phenotype", direction = "wide")
-PT$Organism_name=factor(PT$Organism_name)
-PT$Phenotype=factor(PT$Phenotype)
-PT$`Integrated_score_+`=as.numeric(PT$`Integrated_score_+`)
-dfmatrix <- acast(PT, Organism_name ~ Phenotype,value.var='Integrated_score_+',fun.aggregate=sum,margins=FALSE)
-
-corrmatrix <- cor(dfmatrix, use="pairwise")
-
-
-#col1 <- colorRampPalette(brewer.pal(9,"BrBG"))
-#https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html
-corrplot(corrmatrix, method = "color", type = "upper",
-         cl.pos = "n", tl.pos = "n")
-
+Also attempted, didn't work: Attempted with R package myTAI. This option requires interaction while code is looping through species, for species with more than one entry in NCBI.  
+```{r}
+# source("taxonomy_p1_myTAI.R")
 ```
 
 
-
-####read in data from Barberan et al. 2016 (IJSEM: https://figshare.com/articles/International_Journal_of_Systematic_and_Evolutionary_Microbiology_IJSEM_phenotypic_database/4272392)
+####Bacterial traits: Read in data in Barberan et al. 2017 and save as p2.Rdata
+Source: https://figshare.com/articles/International_Journal_of_Systematic_and_Evolutionary_Microbiology_IJSEM_phenotypic_database/4272392
 ```{r ijsem}
-path = "4272392/"
-#read table
+source("read_data_pathogen_traits2.R")
+```
 
-ijsem<-read.delim(paste0(path,"IJSEM_pheno_db_v1.0.txt"), sep="\t", header=T, check.names=F, fill=T,
-                  na.strings=c("NA", "", "Not indicated", " Not indicated","not indicated", "Not Indicated", "n/a", "N/A", "Na", "Not given", "not given","Not given for yeasts", "not indicated, available in the online version", "Not indicated for yeasts", "Not Stated", "Not described for yeasts", "Not determined", "Not determined for yeasts"))
+####Bacterial traits: correct taxonomy in Barberan et al. 2017 data
+```{r}
+```
 
-#simplify column names
-colnames(ijsem)<-c("Habitat", "Year", "DOI", "rRNA16S", "GC", "Oxygen",
-                  "Length", "Width", "Motility", "Spore", "MetabAssays", "Genus", "Species", "Strain", "pH_optimum", "pH_range", "Temp_optimum", "Temp_range", "Salt_optimum", "Salt_range", "Pigment", "Shape", "Aggregation", "FirstPage", "CultureCollection", "CarbonSubstrate", "Genome", "Gram", "Subhabitat", "Biolog")
+####find species in common between  Brbic et al. (p1) and Barberan et al. 
+```{r}
+load("p1.Rdata")
+load("p2.Rdata")
+p2$Organism_name = paste(p2$Genus, p2$Species)
 
-#clean Habitat column
-levels(ijsem$Habitat)[levels(ijsem$Habitat)=="freshwater (river, lake, pond)"]<-"freshwater"
-levels(ijsem$Habitat)[levels(ijsem$Habitat)=="freshwater sediment (river, lake, pond"]<-"freshwater sediment"
-
-#clean Oxygen column
-levels(ijsem$Oxygen)[levels(ijsem$Oxygen)=="aerobic"]<-"obligate aerobe"
-levels(ijsem$Oxygen)[levels(ijsem$Oxygen)=="anerobic"]<-"obligate anerobe"
-levels(ijsem$Oxygen)[levels(ijsem$Oxygen)=="microerophile"]<-"microaerophile"
-
-#clean pH_optimum column
-ijsem$pH_optimum<-as.character(ijsem$pH_optimum)
-#this step splits the range values and takes the mean value
-#values that are not numeric are transformed to NAs
-ijsem$pH_optimum<-suppressWarnings(sapply(ijsem$pH_optimum, simplify=T, function(x){mean(as.numeric(unlist(strsplit(x, split="-", fixed=T))))}))
-#remove pH values <0 and >10
-ijsem$pH_optimum[ijsem$pH_optimum<0 | ijsem$pH_optimum>10]<-NA
-
-#clean Temp_optimum column
-ijsem$Temp_optimum<-as.character(ijsem$Temp_optimum)
-#this step splits the range values and takes the mean value
-#values that are not numeric are transformed to NAs
-ijsem$Temp_optimum<-suppressWarnings(sapply(ijsem$Temp_optimum, simplify=T, function(x){mean(as.numeric(unlist(strsplit(x, split="-", fixed=T))))}))
-
-#clean Salt_optimum column
-ijsem$Salt_optimum<-as.character(ijsem$Salt_optimum)
-#this step splits the range values and takes the mean value
-#values that are not numeric are transformed to NAs
-ijsem$Salt_optimum<-suppressWarnings(sapply(ijsem$Salt_optimum, simplify=T, function(x){mean(as.numeric(unlist(strsplit(x, split="-", fixed=T))))}))
-#there are some formatting issues that should be solved
-
-summary(ijsem)
+common = intersect(p1$Organism_name,
+                   p2$Organism_name)
+length(common)
 ```
 
