@@ -3,4 +3,5 @@ load("p2.Rdata")
 
 common = intersect(p1$Organism_name,
                    p2$Organism_name)
-length(common)
+print("number in common")
+print(length(common))

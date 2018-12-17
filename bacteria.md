@@ -321,3 +321,6 @@ source("GMPD_pathogen.R")
 ``` r
 source("common_p.R")
 ```
+
+    ## [1] "number in common"
+    ## [1] 362
