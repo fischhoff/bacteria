@@ -1,5 +1,5 @@
 ---
-title: "bacteria"
+title: "Bacterial traits and human disease outcomes"
 author: "Ilya"
 date: "12/7/2018"
 output: github_document
@@ -9,12 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ####To do:
-Correct taxonomy in Barberan et al. 2017.
-
 Add code reading in GIDEON data from other Rmd file. 
-
-
-#Bacterial traits and human disease outcomes
 
 ##Strategy
 Integrate data on host species, pathogen species, pathogen traits, and human disease outcomes. 
@@ -32,6 +27,15 @@ Apply generalized boosted models (GBM) to predict human disease outcomes based o
 ####install and load required packages
 ```{r packages, echo=FALSE}
 source("packages_bacteria.R")
+```
+
+###Data: Global Mammal Parasite Database
+
+###Mammal pathogen data
+####read in GMPD and save
+check out taxonomy dataset 
+```{r}
+source("GMPD.R")
 ```
 
 
@@ -66,6 +70,12 @@ Also attempted, didn't work: Attempted with R package myTAI. This option require
 # source("taxonomy_p1_myTAI.R")
 ```
 
+####Bacterial traits: determine correlations among variables in Brbic et al. 2016. 
+Note: commenting out corrplot for now because it throws an error. 
+```{r}
+# source("corrplot_bacteria.R")
+```
+
 
 ####Bacterial traits: Read in data in Barberan et al. 2017 and save as p2.Rdata
 Source: https://figshare.com/articles/International_Journal_of_Systematic_and_Evolutionary_Microbiology_IJSEM_phenotypic_database/4272392
@@ -73,18 +83,28 @@ Source: https://figshare.com/articles/International_Journal_of_Systematic_and_Ev
 source("read_data_pathogen_traits2.R")
 ```
 
+
 ####Bacterial traits: correct taxonomy in Barberan et al. 2017 data
+output file as species2.csv. make field Organism_name. Some species have multiple entries. There is no explanation about this (https://figshare.com/articles/International_Journal_of_Systematic_and_Evolutionary_Microbiology_IJSEM_phenotypic_database/4272392). Executive decision: filter data so that there are only records for species with one line of data, because these are data in which we have most confidence.   
+After running taxonomy_ncbi_2.R, go to NCBI website, upload species.csv, and choose option to save to file from website. Save file to working directory. 
 ```{r}
+source("taxonomy_ncbi_2.R")
 ```
+
+Read back in file outputted from NCBI website ("tax_report2.txt"). Merge tax_report.txt with p2 (original Barberan et al. data), with new field "preferred.name"
+```{r taxonomy_ncbi_out2}
+source("taxonomy_ncbi_out2.R")
+```
+
+####Bacterial traits: determine overlap between species in GMPD and each trait database
+```{r}
+source("GMPD_pathogen.R")
+```
+
+
 
 ####find species in common between  Brbic et al. (p1) and Barberan et al. 
 ```{r}
-load("p1.Rdata")
-load("p2.Rdata")
-p2$Organism_name = paste(p2$Genus, p2$Species)
-
-common = intersect(p1$Organism_name,
-                   p2$Organism_name)
-length(common)
+source("common_p.R")
 ```
 

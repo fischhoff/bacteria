@@ -5,6 +5,7 @@ pkgTest <- function(x)
   }
   library(x, character.only = TRUE)
 }
-neededPackages <- c("data.table", "dplyr", "reshape2", "corrplot", "RColorBrewer", "taxize", "myTAI", "usethis", "taxizedb", "stringr")
+neededPackages <- c("data.table", "dplyr", "reshape2", "corrplot", "RColorBrewer", "taxize", "myTAI", "usethis", "taxizedb", "stringr",
+                    "naniar", "Hmisc")
 
 for (package in neededPackages){pkgTest(package)}
