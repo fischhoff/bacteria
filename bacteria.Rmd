@@ -20,7 +20,8 @@ Apply generalized boosted models (GBM) to predict human disease outcomes based o
 1. GIDEON dataset of ungulate hosts and zoonotic diseases
 2. Dataset relating mammals to pathogens (GMPD)
 3. Bacterial trait datasets (Brbic et al. 2016; Barberan et al. 2017) 
-4. Human disease outcomes (GIDEON): case fatality rates, outbreak size, prevalence 5. Ungulate host ranges (IUCN)
+4. Dataset matching diseases to pathogens (to be collected)
+5. Human disease outcomes (GIDEON): case fatality rates, outbreak size, prevalence 5. Ungulate host ranges (IUCN)
 
 ##Study design
 
@@ -37,7 +38,6 @@ check out taxonomy dataset
 ```{r}
 source("GMPD.R")
 ```
-
 
 ###Data: bacterial traits
 
@@ -101,10 +101,23 @@ source("taxonomy_ncbi_out2.R")
 source("GMPD_pathogen.R")
 ```
 
-
-
 ####find species in common between  Brbic et al. (p1) and Barberan et al. 
 ```{r}
 source("common_p.R")
+```
+
+###Data: match diseases to bacterial pathogens
+
+####Read in GIDEON data from scrape
+Save as GIDEON.Rdata, including unique diseases associated with each mammal taxon
+```{r}
+source("GIDEON_read.R")
+```
+
+####GIDEON data: subset to include only ungulates
+Subset ungulate GIDEON data to then match up diseases with pathogens. 
+This way of doing the subset is wrong because it assumes ungulates must be in GMPD; there could be records in GIDEON for ungulate / disease for which associated pathogen has not been recorded in GMPD. Need to find dataset with corrected names for all ungulates. 
+```{r}
+source("GIDEON_subset.R")
 ```
 

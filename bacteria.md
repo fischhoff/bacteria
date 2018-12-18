@@ -20,7 +20,8 @@ Data sources
 1.  GIDEON dataset of ungulate hosts and zoonotic diseases
 2.  Dataset relating mammals to pathogens (GMPD)
 3.  Bacterial trait datasets (Brbic et al. 2016; Barberan et al. 2017)
-4.  Human disease outcomes (GIDEON): case fatality rates, outbreak size, prevalence 5. Ungulate host ranges (IUCN)
+4.  Dataset matching diseases to pathogens (to be collected)
+5.  Human disease outcomes (GIDEON): case fatality rates, outbreak size, prevalence 5. Ungulate host ranges (IUCN)
 
 Study design
 ------------
@@ -324,3 +325,26 @@ source("common_p.R")
 
     ## [1] "number in common"
     ## [1] 362
+
+### Data: match diseases to bacterial pathogens
+
+#### Read in GIDEON data from scrape
+
+Save as GIDEON.Rdata, including unique diseases associated with each mammal taxon
+
+``` r
+source("GIDEON_read.R")
+```
+
+#### GIDEON data: subset to include only ungulates
+
+Subset ungulate GIDEON data to then match up diseases with pathogens. This way of doing the subset is wrong because it assumes ungulates must be in GMPD; there could be records in GIDEON for ungulate / disease for which associated pathogen has not been recorded in GMPD. Need to find dataset with corrected names for all ungulates.
+
+``` r
+source("GIDEON_subset.R")
+```
+
+    ## [1] 2256    2
+    ## [1] 293422      3
+    ## [1] 1091    3
+    ## [1] 334   3
