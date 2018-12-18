@@ -3,10 +3,6 @@ Bacterial traits and human disease outcomes
 Ilya
 12/7/2018
 
-#### To do:
-
-Add code reading in GIDEON data from other Rmd file.
-
 Strategy
 --------
 
@@ -338,7 +334,7 @@ source("GIDEON_read.R")
 
 #### GIDEON data: subset to include only ungulates
 
-Subset ungulate GIDEON data to then match up diseases with pathogens. This way of doing the subset is wrong because it assumes ungulates must be in GMPD; there could be records in GIDEON for ungulate / disease for which associated pathogen has not been recorded in GMPD. Need to find dataset with corrected names for all ungulates.
+Subset ungulate GIDEON data to then match up diseases with pathogens. This way of doing the subset is wrong because it assumes ungulates must be in GMPD; there could be records in GIDEON for ungulate / disease for which associated pathogen has not been recorded in GMPD. Need to redo this with Mammal Species of the World (<https://www.gbif.org/dataset/672aca30-f1b5-43d3-8a2b-c1606125fa1b>)
 
 ``` r
 source("GIDEON_subset.R")
