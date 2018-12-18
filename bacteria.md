@@ -334,13 +334,25 @@ source("GIDEON_read.R")
 
 #### GIDEON data: subset to include only ungulates
 
-Subset ungulate GIDEON data to then match up diseases with pathogens. This way of doing the subset is wrong because it assumes ungulates must be in GMPD; there could be records in GIDEON for ungulate / disease for which associated pathogen has not been recorded in GMPD. Need to redo this with Mammal Species of the World (<https://www.gbif.org/dataset/672aca30-f1b5-43d3-8a2b-c1606125fa1b>)
+Subset ungulate GIDEON data to then match up diseases with pathogens.
 
 ``` r
-source("GIDEON_subset.R")
+#Do this with Mammal Species of the World (
+#http://www.departments.bucknell.edu/biology/resources/msw3/
+source("GIDEON_subset_ungulates.R")
 ```
 
+    ## [1] "number of species / zoonosis pairs in GIDEON including all orders"
     ## [1] 2256    2
-    ## [1] 293422      3
-    ## [1] 1091    3
-    ## [1] 334   3
+    ## [1] "number of species / zoonosis pairs in GIDEON (all orders) after merge with mammals of the world checklist"
+    ## [1] 15687     3
+    ## [1] "number of *unique* species / zoonosis pairs in GIDEON (all orders) after merge with mammals of the world checklist"
+    ## [1] 2246    3
+    ## [1] 2246    3
+    ## [1] "number of species / zoonosis records in GIDEON for ungulates"
+    ## [1] 367   3
+
+``` r
+#This next way of doing the subset is wrong because it assumes ungulates must be in GMPD; however, there could be records in GIDEON for ungulate / disease for which associated pathogen has not been recorded in GMPD. 
+# source("GIDEON_subset.R")
+```
