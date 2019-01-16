@@ -8,32 +8,237 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-##Strategy
-Integrate data on host species, pathogen species, pathogen traits, and human disease outcomes. 
+###To do 
+Scrape GIDEON database for more up-to-date dataset of mammal hosts and diseases. 
 
-Apply generalized boosted models (GBM) to predict human disease outcomes based on bacterial traits. 
+##Strategy
+
+Integrate data on host species, bacterial species and traits, and human disease outcomes.
+Visually summarize bacteria causing disease in mammals.    
+Apply generalized boosted models (GBM) to predict transmissibility and human disease outcomes based on bacterial traits. 
+
+###1. Get bacteria-caused dx in GIDEON   
+###2. Match dx to pathogen spp. names
+###3. Match spp. names (from GIDEON zdx and GMPD) to traits (in GMPD & other)
+###4. Compile master list of bacteria spp & traits
+###5. Feature construction with bacterial traits
+###6. Data visualization: summary “state of knowledge” on bacteria causing disease in mammals or humans
+###7. Use traits to predict transmissibility and human disease outcomes
 
 ##Data sources
-1. GIDEON dataset of ungulate hosts and zoonotic diseases
+1. GIDEON dataset of bacterial zoonotic diseases and their mammalian hosts
 2. Dataset relating mammals to pathogens (GMPD)
-3. Bacterial trait datasets (Brbic et al. 2016; Barberan et al. 2017) 
-4. Dataset matching diseases to pathogens (to be collected)
-5. Human disease outcomes (GIDEON): case fatality rates, outbreak size, prevalence 5. Ungulate host ranges (IUCN)
+3. Dataset matching diseases to pathogens (to be collected)
+4. Bacterial trait datasets (Brbic et al. 2016; Barberan et al. 2017; EID2; GMPD) 
+5. Human disease outcomes (GIDEON) and transmissibility (Han) 
+6. Mammalian host ranges (IUCN)
 
 ##Study design
 
 ####install and load required packages
 ```{r packages, echo=FALSE}
 source("packages_bacteria.R")
+
 ```
 
+###1. Get bacteria-caused dx in GIDEON   
+
+####Read in GIDEON data from scrape
+Save as GIDEON.Rdata, including unique diseases associated with each mammal taxon
+```{r}
+source("GIDEON_read.R")
+```
+
+####Get bacterial diseases in GIDEON
+In GIDEON, filter: Disease --> Agent --> bacterium. Copy diseases into google sheet GIDEON_bacterium_dx 
+Subset GIDEON.Rdata with GIDEON_bacterium_dx so that GIDEON contains only bacterial diseases
+```{r}
+source("GIDEON_subset_bacterial.R")
+```
+
+###2. Match bacterial dx to pathogen spp names
+
+####GIDEON data: subset to include only non-carnivores and non-primates 
+Subset GIDEON data (on mammalian hosts and diseases) to then match up diseases with pathogens. This zdx-pathogen matching has already been done for carnivores and primates (in part), so exclude carnivores and primates. 
+This saves animal_dx_parasites.Rdata and outputs animal-dx-parasites.csv 
+```{r}
+#Do this with Mammal Species of the World (
+#http://www.departments.bucknell.edu/biology/resources/msw3/
+
+#Note that this outputs animal-dx-parasites.csv, which includes only those mammal hosts that have been associated with a bacterial disease (Label = 1) 
+source("GIDEON_subset_exclude_carnivores_primates.R")
+
+#comment out this version that excludes carnivores
+# source("GIDEON_subset_non_carnivores.R")
+
+#Commenting out this subset that only includes ungulates
+#source("GIDEON_subset_ungulates.R")
+
+#This next way of doing the subset is wrong because it assumes ungulates must be in GMPD; however, there could be records in GIDEON for ungulate / disease for which associated pathogen has not been recorded in GMPD. 
+# source("GIDEON_subset.R")
+```
+
+Construct dataset animal-dx-parasites (google sheet) matching bacteria to zdx. Follow protocol in mammal-zdx-parasites instructions (google doc). 
+
+####Bacterial diseases and bacteria: clean data in GIDEON_bacterium_dx. 
+This includes data on bacterial dx that affect people but not other animals. Make separate row for each bacteria species
+Output = human_bacteria.Rdata
+```{r}
+source("parse_species_bacteria.R")
+```
+
+Parse vectors
+```{r}
+source("parse_vector.R")
+```
+
+
+####Assemble data on primates (prim-zdx-parasites.xls, google sheet), carnivores (carnivore-zdx-parasites.csv, dropbox), other mammals (animal-dx-parasites_20190103.csv, google sheet).
+Output list of parasites for checking in NCBI, parasiteGMPD_tax_report.txt. Output df_parasite.Rdata (mammals with parasites), df_no_parasite.Rdata (no parasite), and df_all (mammals w/ and w/o parasite) 
+```{r}
+source("mammal_zdx_assemble.R")
+```
+
+####Assemble mammal (df_all) and human data (human_bacteria). Save as df_all. Note that human_bacteria also includes bacteria found in other mammals.  
+```{r}
+source("human_mammal.R")
+```
+
+Graph vectors associated with each host order
+```{r host_vector}
+source("host_vector.R")
+```
+
+
+####Get all species and classify
+Get species in NCBI; then use "classification" in package "taxize" to get full classification of species. Add classification of each species to dataframe. 
+```{r}
+# source("species_classify.R")
+```
+
+
+####Get id and children of bacteria.
+Version using Catalog of Life. Works but comment out because returns only ~9000 species, which seems like small number, and because not NCBI
+```{r}
+# source("taxize_children_col.R")
+```
+
+Version using taxize and NCBI with downstream_ncbi. Comment out because returns an error.
+```{r}
+#source("taxize_children.R")
+```
+
+Version using taxizedb. Commenting out because yields error: 
+Error in name2taxid(x[is_named], db = "ncbi") : 
+  Some of the input names are ambiguous, try setting out_type to 'summary' 
+```{r}
+#source("taxizedb_children.R")
+```
+
+Version using dev version of taxize. Need to restart R before doing this versiom if CRAN version of taxize is installed. This runs into errors.  
+```{r}
+# source("taxize_dev.R")
+```
+
+####Read in NCBI taxonomy
+This uses parent and child relationships to build up species list. This code is incomplete, would need to use "while" instead to be comprehensive with respect to parent-child relationships. 
+```{r}
+# source("ncbi_taxonomy_read.R")
+```
+
+####Fix taxonomy in df_all.Rdata using ncbi_taxonomy.Rdata. Commenting out for now because still working on ncbi_taxonomy_read.R
+```{r}
+#source("taxonomy_correct.Rdata")
+```
+
+
+
+Upload "parasiteGMPD.csv" to NCBI website (https://www.ncbi.nlm.nih.gov/Taxonomy/TaxIdentifier/tax_identifier.cgi). Choose option to save to file from website. Save file to working directory as "parasiteGMPD_tax_report.txt"
+Use "parasiteGMPD_tax_report.txt" to correct pathogen species names by merging with df_parasite, with new field "preferred.name". Note that some of the preferred.names (e.g. Borelliela) do not match GMPD names (Borrelia). Save df_parasite.Rdata that includes records for mammals without any parasites.
+Comment out, use instead full taxonomy downloaded from NCBI
+```{r parasite_zdx_ncbi}
+# source("parasite_zdx_ncbi.R")
+```
+
+Subset df_all by bacterial diseases (excluding mammals with no diseases). Save df_all.Rdata.
+```{r GIDEON_subset_bacterial}
+source("GIDEON_subset_bacterial.R")
+```
+
+Graph counts across mammalian orders. Use df_all.Rdata. Includes humans among primates
+```{r mammal_orders_graph}
+source("mammal_orders_graph.R")
+```
+
+Graph counts across mammalian orders, with different colors for different bacterial orders. 
+```{r mammal_orders_graph_stacked}
+source("mammal_orders_graph_stacked.R")
+```
+
+Graph counts across bacterial species of how many mammals they associate with. Use df_all.Rdata
+```{r bacteria_host_species_hist_graph}
+source("bacteria_host_species_hist_graph.R")
+```
+
+Graph histogram of number of pathogens associated with each host species
+```{r host_pathogen_histogram}
+source("host_pathogen_histogram.R")
+```
+
+
+
+###3. Match spp. names (from GIDEON zdx and GMPD) to traits (in GMPD & other)
+
+####Get info in BacDive for all bacteria, including those with and without zdx associated
+
+
+####GMPD: assign GMPD traits to bacteria associated with zdx 
+Read in GMPD taxonomy and subset bacteria. Save gmpd_taxonomy_bacteria.Rdata
+```{r GMPD_bacteria}
+source("GMPD_bacteria.R")
+```
+
+Merge gmpd_taxonomy_bacteria.Rdata with GMPD parasite traits. Save gmpd.Rdata
+```{r GMPD_traits}
+source("GMPD_traits.R")
+```
+
+Assign GMPD traits to bacteria associated with zdx. Save df_parasite_gmpd.Rdata. Note: this version could be updated to use df_all, but better to integrate with traits in BacDive
+```{r bacteria_zdx_gmpd_traits}
+source("bacteria_zdx_gmpd_traits.R")
+```
+
+###6. Data visualization: summary “state of knowledge” on bacteria causing disease in mammals or humans 
+
+####Graph counts of host-bacteria pairs by bacterial order
+Note: this is imperfect because only GMPD-represented species are present. 
+```{r bacteria_order}
+source("bacteria_order.R")
+```
+
+####Graph counts of host-bacteria pairs by traits in GMPD
+```{r bacteria_traits_gmpd_graph}
+source("bacteria_traits_gmpd_graph.R")
+
+```
+
+
+###SCRATCH below here
+
+####Visualize data on number of bacterial disease per host species, facet wrap by host order
+
+Assemble all GMPD datasets
+
+
 ###Data: Global Mammal Parasite Database
+
+
 
 ###Mammal pathogen data
 ####read in GMPD and save
 check out taxonomy dataset 
 ```{r}
-source("GMPD.R")
+#source("GMPD.R")
 ```
 
 ###Data: bacterial traits
@@ -43,18 +248,18 @@ Source: ProTraits: http://protraits.irb.hr/data.html.
 We are using version of data in which traits have been binarized. 
 Read in data and save as p1.Rdata. 
 ```{r read_data_pathogen_traits1}
-source("read_data_pathogen_traits1.R")
+#source("read_data_pathogen_traits1.R")
 ```
 
 ####Bacterial traits: correct taxonomy in Brbic et al. 2016 data
 Output data to file (species.csv) to upload to NCBI website (https://www.ncbi.nlm.nih.gov/Taxonomy/TaxIdentifier/tax_identifier.cgi). After running taxonomy_ncbi.R, go to NCBI website, upload species.csv, and choose option to save to file from website. Save file to working directory. 
 ```{r taxonomy_ncbi}
-source("taxonomy_ncbi.R")
+#source("taxonomy_ncbi.R")
 ```
 
 Read back in file outputted from NCBI website ("tax_report.txt"). Merge tax_report.txt with p1 (original Brbic et al. data), with new field "preferred.name"
 ```{r taxonomy_ncbi_out}
-source("taxonomy_ncbi_out.R")
+#source("taxonomy_ncbi_out.R")
 ```
 
 Also attempted, didn't work: Attempted with R package taxize fxn synonyms and "col" (Catalog of Life). Note: taxize does not include NCBI. This requires a lot of interaction for species with multiple matches.  
@@ -77,7 +282,7 @@ Note: commenting out corrplot for now because it throws an error.
 ####Bacterial traits: Read in data in Barberan et al. 2017 and save as p2.Rdata
 Source: https://figshare.com/articles/International_Journal_of_Systematic_and_Evolutionary_Microbiology_IJSEM_phenotypic_database/4272392
 ```{r ijsem}
-source("read_data_pathogen_traits2.R")
+#source("read_data_pathogen_traits2.R")
 ```
 
 
@@ -85,40 +290,25 @@ source("read_data_pathogen_traits2.R")
 output file as species2.csv. make field Organism_name. Some species have multiple entries. There is no explanation about this (https://figshare.com/articles/International_Journal_of_Systematic_and_Evolutionary_Microbiology_IJSEM_phenotypic_database/4272392). Executive decision: filter data so that there are only records for species with one line of data, because these are data in which we have most confidence.   
 After running taxonomy_ncbi_2.R, go to NCBI website, upload species.csv, and choose option to save to file from website. Save file to working directory. 
 ```{r}
-source("taxonomy_ncbi_2.R")
+#source("taxonomy_ncbi_2.R")
 ```
 
 Read back in file outputted from NCBI website ("tax_report2.txt"). Merge tax_report.txt with p2 (original Barberan et al. data), with new field "preferred.name"
 ```{r taxonomy_ncbi_out2}
-source("taxonomy_ncbi_out2.R")
+#source("taxonomy_ncbi_out2.R")
 ```
 
 ####Bacterial traits: determine overlap between species in GMPD and each trait database
 ```{r}
-source("GMPD_pathogen.R")
+#source("GMPD_pathogen.R")
 ```
 
 ####find species in common between  Brbic et al. (p1) and Barberan et al. 
 ```{r}
-source("common_p.R")
+#source("common_p.R")
 ```
 
-###Data: match diseases to bacterial pathogens
 
-####Read in GIDEON data from scrape
-Save as GIDEON.Rdata, including unique diseases associated with each mammal taxon
-```{r}
-source("GIDEON_read.R")
-```
 
-####GIDEON data: subset to include only ungulates
-Subset ungulate GIDEON data to then match up diseases with pathogens. 
-```{r}
-#Do this with Mammal Species of the World (
-#http://www.departments.bucknell.edu/biology/resources/msw3/
-source("GIDEON_subset_ungulates.R")
 
-#This next way of doing the subset is wrong because it assumes ungulates must be in GMPD; however, there could be records in GIDEON for ungulate / disease for which associated pathogen has not been recorded in GMPD. 
-# source("GIDEON_subset.R")
-```
 
