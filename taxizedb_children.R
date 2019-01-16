@@ -11,5 +11,5 @@ library(taxizedb)
 
 x <- downstream(2, db = "ncbi", downto = "species")
 x <- x[[1]]
-bacteria = x
-write.csv(bacteria, file = "bacteria.csv")
+bacteria_species = x
+write.csv(bacteria_species, file = "bacteria_species.csv")

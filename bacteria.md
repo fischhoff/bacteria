@@ -114,7 +114,7 @@ Study design
 
     ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
     ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
-    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/Rtmp5eUelK/devtools2f876b8eed77/TIBHannover-BacDiveR-7108220'  \
+    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/RtmpZTg8u8/devtools30c2195b13c9/TIBHannover-BacDiveR-7108220'  \
     ##   --library='/Library/Frameworks/R.framework/Versions/3.4/Resources/library'  \
     ##   --install-tests
 
@@ -245,17 +245,6 @@ plot
 
 ![](bacteria_files/figure-markdown_github/host_vector-1.png)
 
-#### Get all species and classify
-
-Get species in NCBI; then use "classification" in package "taxize" to get full classification of species. Add classification of each species to dataframe. This solution is not practical because it would take 44 hours even with API key.
-
-``` r
-#create list of species
-#source("species_classify.R")
-#classify each species 
-#source("R_species_classify1.R")
-```
-
 #### Get id and children of bacteria.
 
 Version using taxizedb. This works.
@@ -285,9 +274,7 @@ Version using dev version of taxize. Need to restart R before doing this versiom
 # source("taxize_dev.R")
 ```
 
-#### Read in NCBI taxonomy
-
-This uses parent and child relationships to build up species list. This code is incomplete, would need to use "while" instead to be comprehensive with respect to parent-child relationships.
+Read in NCBI taxonomy This uses parent and child relationships to build up species list. This code is incomplete, would need to use "while" instead to be comprehensive with respect to parent-child relationships.
 
 ``` r
 # source("ncbi_taxonomy_read.R")
@@ -298,6 +285,26 @@ This uses parent and child relationships to build up species list. This code is 
 ``` r
 #source("taxonomy_correct.Rdata")
 ```
+
+Get all species and classify Get species in NCBI; then use "classification" in package "taxize" to get full classification of species. Add classification of each species to dataframe. This solution is not practical because it would take 44 hours even with API key.
+
+``` r
+#create list of species
+#source("species_classify.R")
+#classify each species 
+#source("R_species_classify1.R")
+```
+
+#### Classify bacteria
+
+Use classification in taxize. Note this currently only does part of dataset, would take ~45 min to do all.
+
+``` r
+source("R_classify_bacteria.R")
+```
+
+    ##         user       system      elapsed 
+    ## 0.0065000000 0.0002166667 0.0069166667
 
 Upload "parasiteGMPD.csv" to NCBI website (<https://www.ncbi.nlm.nih.gov/Taxonomy/TaxIdentifier/tax_identifier.cgi>). Choose option to save to file from website. Save file to working directory as "parasiteGMPD\_tax\_report.txt" Use "parasiteGMPD\_tax\_report.txt" to correct pathogen species names by merging with df\_parasite, with new field "preferred.name". Note that some of the preferred.names (e.g. Borelliela) do not match GMPD names (Borrelia). Save df\_parasite.Rdata that includes records for mammals without any parasites. Comment out, use instead full taxonomy downloaded from NCBI
 
