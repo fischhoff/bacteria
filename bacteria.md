@@ -114,7 +114,7 @@ Study design
 
     ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
     ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
-    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/RtmpqcDnLr/devtools1d5d6fc2cf41/TIBHannover-BacDiveR-7108220'  \
+    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/RtmpI6eOY7/devtools1fc54cd7eb32/TIBHannover-BacDiveR-7108220'  \
     ##   --library='/Library/Frameworks/R.framework/Versions/3.4/Resources/library'  \
     ##   --install-tests
 
@@ -141,7 +141,7 @@ source("GIDEON_subset_bacterial.R")
 ```
 
     ## [1] "rows including all types of diseases"
-    ## [1] 10574
+    ## [1] 10000
     ## [1] "number of bacterial diseases  in df_all"
     ## [1] 129
     ## [1] "rows in df_all -- only bacterial diseases"
@@ -239,6 +239,12 @@ source("host_vector.R")
 
     ## Saving 7 x 5 in image
 
+``` r
+plot
+```
+
+![](bacteria_files/figure-markdown_github/host_vector-1.png)
+
 #### Get all species and classify
 
 Get species in NCBI; then use "classification" in package "taxize" to get full classification of species. Add classification of each species to dataframe.
@@ -316,6 +322,12 @@ source("mammal_orders_graph.R")
 
     ## Saving 7 x 5 in image
 
+``` r
+plot
+```
+
+![](bacteria_files/figure-markdown_github/mammal_orders_graph-1.png)
+
 Graph counts across mammalian orders, with different colors for different bacterial orders.
 
 ``` r
@@ -323,6 +335,12 @@ source("mammal_orders_graph_stacked.R")
 ```
 
     ## Saving 7 x 5 in image
+
+``` r
+plot
+```
+
+![](bacteria_files/figure-markdown_github/mammal_orders_graph_stacked-1.png)
 
 Graph counts across bacterial species of how many mammals they associate with. Use df\_all.Rdata
 
@@ -334,6 +352,12 @@ source("bacteria_host_species_hist_graph.R")
 
     ## Saving 7 x 5 in image
 
+``` r
+plot
+```
+
+![](bacteria_files/figure-markdown_github/bacteria_host_species_hist_graph-1.png)
+
 Graph histogram of number of pathogens associated with each host species
 
 ``` r
@@ -343,6 +367,12 @@ source("host_pathogen_histogram.R")
     ## Warning: Ignoring unknown parameters: binwidth, bins, pad
 
     ## Saving 7 x 5 in image
+
+``` r
+plot
+```
+
+![](bacteria_files/figure-markdown_github/host_pathogen_histogram-1.png)
 
 ### 3. Match spp. names (from GIDEON zdx and GMPD) to traits (in GMPD & other)
 
@@ -382,6 +412,12 @@ source("bacteria_order.R")
 
     ## Saving 7 x 5 in image
 
+``` r
+plot
+```
+
+![](bacteria_files/figure-markdown_github/bacteria_order-1.png)
+
 #### Graph counts of host-bacteria pairs by traits in GMPD
 
 ``` r
@@ -389,6 +425,12 @@ source("bacteria_traits_gmpd_graph.R")
 ```
 
     ## Saving 7 x 5 in image
+
+``` r
+plot
+```
+
+![](bacteria_files/figure-markdown_github/bacteria_traits_gmpd_graph-1.png)
 
 ### SCRATCH below here
 

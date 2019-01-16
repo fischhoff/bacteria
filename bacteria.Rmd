@@ -107,6 +107,7 @@ source("human_mammal.R")
 Graph vectors associated with each host order
 ```{r host_vector}
 source("host_vector.R")
+plot
 ```
 
 
@@ -168,21 +169,25 @@ source("GIDEON_subset_bacterial.R")
 Graph counts across mammalian orders. Use df_all.Rdata. Includes humans among primates
 ```{r mammal_orders_graph}
 source("mammal_orders_graph.R")
+plot
 ```
 
 Graph counts across mammalian orders, with different colors for different bacterial orders. 
 ```{r mammal_orders_graph_stacked}
 source("mammal_orders_graph_stacked.R")
+plot
 ```
 
 Graph counts across bacterial species of how many mammals they associate with. Use df_all.Rdata
 ```{r bacteria_host_species_hist_graph}
 source("bacteria_host_species_hist_graph.R")
+plot
 ```
 
 Graph histogram of number of pathogens associated with each host species
 ```{r host_pathogen_histogram}
 source("host_pathogen_histogram.R")
+plot
 ```
 
 
@@ -214,12 +219,13 @@ source("bacteria_zdx_gmpd_traits.R")
 Note: this is imperfect because only GMPD-represented species are present. 
 ```{r bacteria_order}
 source("bacteria_order.R")
+plot
 ```
 
 ####Graph counts of host-bacteria pairs by traits in GMPD
 ```{r bacteria_traits_gmpd_graph}
 source("bacteria_traits_gmpd_graph.R")
-
+plot
 ```
 
 
@@ -231,8 +237,6 @@ Assemble all GMPD datasets
 
 
 ###Data: Global Mammal Parasite Database
-
-
 
 ###Mammal pathogen data
 ####read in GMPD and save
