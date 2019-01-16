@@ -4,10 +4,11 @@ print(dim)
 
 #Start the clock
 ptm<-proc.time()
-
+out =NULL
 a = 100
 for (a in 1:100){
 # for (a in 1:dim){
+  Sys.sleep(0.15)
   tmp =classification(sp$id[a], db = "ncbi")
   tmp = tmp[[1]]
   nrows = dim(tmp)[1]
