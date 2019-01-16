@@ -112,7 +112,7 @@ plot
 
 
 ####Get all species and classify
-Get species in NCBI; then use "classification" in package "taxize" to get full classification of species. Add classification of each species to dataframe. 
+Get species in NCBI; then use "classification" in package "taxize" to get full classification of species. Add classification of each species to dataframe. Test github.
 ```{r species_classify}
 #create list of species
 source("species_classify.R")
