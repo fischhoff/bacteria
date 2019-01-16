@@ -114,7 +114,7 @@ Study design
 
     ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
     ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
-    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/RtmpI6eOY7/devtools1fc54cd7eb32/TIBHannover-BacDiveR-7108220'  \
+    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/RtmpbZUyJ2/devtools214861bfcd9f/TIBHannover-BacDiveR-7108220'  \
     ##   --library='/Library/Frameworks/R.framework/Versions/3.4/Resources/library'  \
     ##   --install-tests
 
@@ -250,8 +250,14 @@ plot
 Get species in NCBI; then use "classification" in package "taxize" to get full classification of species. Add classification of each species to dataframe.
 
 ``` r
-# source("species_classify.R")
+#create list of species
+source("species_classify.R")
+source("R_species_classify1.R")
 ```
+
+    ## [1] 1675025
+    ##         user       system      elapsed 
+    ## 0.0047166667 0.0004333333 0.0053166667
 
 #### Get id and children of bacteria.
 
