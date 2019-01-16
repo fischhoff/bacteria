@@ -114,7 +114,7 @@ Study design
 
     ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
     ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
-    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/RtmpwKrG56/devtools28f13a87bdec/TIBHannover-BacDiveR-7108220'  \
+    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/Rtmp5eUelK/devtools2f876b8eed77/TIBHannover-BacDiveR-7108220'  \
     ##   --library='/Library/Frameworks/R.framework/Versions/3.4/Resources/library'  \
     ##   --install-tests
 
@@ -247,20 +247,25 @@ plot
 
 #### Get all species and classify
 
-Get species in NCBI; then use "classification" in package "taxize" to get full classification of species. Add classification of each species to dataframe.
+Get species in NCBI; then use "classification" in package "taxize" to get full classification of species. Add classification of each species to dataframe. This solution is not practical because it would take 44 hours even with API key.
 
 ``` r
 #create list of species
-source("species_classify.R")
+#source("species_classify.R")
 #classify each species 
-source("R_species_classify1.R")
+#source("R_species_classify1.R")
 ```
 
-    ## [1] 1675025
-    ##       user     system    elapsed 
-    ## 0.08321667 0.00540000 0.09206667
-
 #### Get id and children of bacteria.
+
+Version using taxizedb. This works.
+
+``` r
+source("taxizedb_children.R")
+```
+
+    ## Skipping install of 'taxizedb' from a github remote, the SHA1 (0e5e4cc4) has not changed since last install.
+    ##   Use `force = TRUE` to force installation
 
 Version using Catalog of Life. Works but comment out because returns only ~9000 species, which seems like small number, and because not NCBI
 
@@ -272,12 +277,6 @@ Version using taxize and NCBI with downstream\_ncbi. Comment out because returns
 
 ``` r
 #source("taxize_children.R")
-```
-
-Version using taxizedb. Commenting out because yields error: Error in name2taxid(x\[is\_named\], db = "ncbi") : Some of the input names are ambiguous, try setting out\_type to 'summary'
-
-``` r
-#source("taxizedb_children.R")
 ```
 
 Version using dev version of taxize. Need to restart R before doing this versiom if CRAN version of taxize is installed. This runs into errors.

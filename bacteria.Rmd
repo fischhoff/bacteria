@@ -122,6 +122,11 @@ Get species in NCBI; then use "classification" in package "taxize" to get full c
 
 
 ####Get id and children of bacteria.
+Version using taxizedb. This works.  
+```{r}
+source("taxizedb_children.R")
+```
+
 Version using Catalog of Life. Works but comment out because returns only ~9000 species, which seems like small number, and because not NCBI
 ```{r}
 # source("taxize_children_col.R")
@@ -130,13 +135,6 @@ Version using Catalog of Life. Works but comment out because returns only ~9000 
 Version using taxize and NCBI with downstream_ncbi. Comment out because returns an error.
 ```{r}
 #source("taxize_children.R")
-```
-
-Version using taxizedb. Commenting out because yields error: 
-Error in name2taxid(x[is_named], db = "ncbi") : 
-  Some of the input names are ambiguous, try setting out_type to 'summary' 
-```{r}
-#source("taxizedb_children.R")
 ```
 
 Version using dev version of taxize. Need to restart R before doing this versiom if CRAN version of taxize is installed. This runs into errors.  
