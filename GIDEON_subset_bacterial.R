@@ -4,7 +4,7 @@ load("df_all.Rdata")
 print("rows including all types of diseases")
 print(dim(df_all)[1])
 #read in bacterial diseases from df_all
-df = read.csv("GIDEON_bacterium - 20181219.csv")
+df = read.csv("GIDEON_bacterium_dx - 20181219.csv")
 print("number of bacterial diseases  in df_all")
 print(dim(df)[1])
 #subset df_all to include only those zoonoses that are bacterial
