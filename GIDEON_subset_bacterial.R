@@ -8,7 +8,8 @@ df = read.csv("GIDEON_bacterium_dx - 20181219.csv")
 print("number of bacterial diseases  in df_all")
 print(dim(df)[1])
 #subset df_all to include only those zoonoses that are bacterial
-df_all$disease = trimws(as.character(df_all$disease))
+df_all$disease = trimws(as.character(df_all$Zoonosis))
+
 df$bacterial_disease =as.character(df$bacterial_disease)
 
 df_0 = subset(df_all, Label == 0)

@@ -1,7 +1,10 @@
 load("human_bacteria.Rdata")
 load("df_all.Rdata")
 #rename fields to be concordant
-names(df_all)[names(df_all)=="Zoonosis"]="disease"
+keep = names(df_all)
+keep = setdiff(keep, "Zoonosis")
+df_all = df_all[,keep]
+# names(df_all)[names(df_all)=="Zoonosis"]="disease"
 names(human_bacteria)[names(human_bacteria)=="bacterial_disease"]="disease"
 names(df_all)[names(df_all)=="parasiteGMPD"]="pathogen"
 

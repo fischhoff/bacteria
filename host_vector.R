@@ -17,7 +17,7 @@ non_human = subset(df, Order !="Human")
 non_human = non_human[,c("Spp","Order","pathogen")]
 non_human = merge(non_human, human)
 
-df = non_human
+df = non_human#includes human
 df = df[,c("Spp", "vector",
            "Order")]
 df = unique(df)

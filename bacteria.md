@@ -114,7 +114,7 @@ Study design
 
     ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
     ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
-    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/RtmpbZUyJ2/devtools214861bfcd9f/TIBHannover-BacDiveR-7108220'  \
+    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/RtmpwKrG56/devtools28f13a87bdec/TIBHannover-BacDiveR-7108220'  \
     ##   --library='/Library/Frameworks/R.framework/Versions/3.4/Resources/library'  \
     ##   --install-tests
 
@@ -131,23 +131,6 @@ Save as GIDEON.Rdata, including unique diseases associated with each mammal taxo
 ``` r
 source("GIDEON_read.R")
 ```
-
-#### Get bacterial diseases in GIDEON
-
-In GIDEON, filter: Disease --&gt; Agent --&gt; bacterium. Copy diseases into google sheet GIDEON\_bacterium\_dx Subset GIDEON.Rdata with GIDEON\_bacterium\_dx so that GIDEON contains only bacterial diseases
-
-``` r
-source("GIDEON_subset_bacterial.R")
-```
-
-    ## [1] "rows including all types of diseases"
-    ## [1] 10000
-    ## [1] "number of bacterial diseases  in df_all"
-    ## [1] 129
-    ## [1] "rows in df_all -- only bacterial diseases"
-    ## [1] 904
-    ## [1] "rows in df_all -- including mammals with Label = 0"
-    ## [1] 10000
 
 ### 2. Match bacterial dx to pathogen spp names
 
@@ -225,13 +208,30 @@ source("mammal_zdx_assemble.R")
     ## [1] 666   5
     ## [1] 499  11
 
+#### Get bacterial diseases in GIDEON
+
+In GIDEON, filter: Disease --&gt; Agent --&gt; bacterium. Copy diseases into google sheet GIDEON\_bacterium\_dx. Add bacteria there. Subset df\_all.Rdata with GIDEON\_bacterium\_dx so that GIDEON contains only bacterial diseases
+
+``` r
+source("GIDEON_subset_bacterial.R")
+```
+
+    ## [1] "rows including all types of diseases"
+    ## [1] 10345
+    ## [1] "number of bacterial diseases  in df_all"
+    ## [1] 129
+    ## [1] "rows in df_all -- only bacterial diseases"
+    ## [1] 675
+    ## [1] "rows in df_all -- including mammals with Label = 0"
+    ## [1] 9771
+
 #### Assemble mammal (df\_all) and human data (human\_bacteria). Save as df\_all. Note that human\_bacteria also includes bacteria found in other mammals.
 
 ``` r
 source("human_mammal.R")
 ```
 
-Graph vectors associated with each host order
+Graph vectors associated with each host order. This assigns vectors from human data to non-human, but does not resave this as new dataframe
 
 ``` r
 source("host_vector.R")
@@ -252,12 +252,13 @@ Get species in NCBI; then use "classification" in package "taxize" to get full c
 ``` r
 #create list of species
 source("species_classify.R")
+#classify each species 
 source("R_species_classify1.R")
 ```
 
     ## [1] 1675025
-    ##         user       system      elapsed 
-    ## 0.0047166667 0.0004333333 0.0053166667
+    ##       user     system    elapsed 
+    ## 0.08321667 0.00540000 0.09206667
 
 #### Get id and children of bacteria.
 
@@ -305,20 +306,11 @@ Upload "parasiteGMPD.csv" to NCBI website (<https://www.ncbi.nlm.nih.gov/Taxonom
 # source("parasite_zdx_ncbi.R")
 ```
 
-Subset df\_all by bacterial diseases (excluding mammals with no diseases). Save df\_all.Rdata.
+Subset df\_all by bacterial diseases (excluding mammals with no diseases). Save df\_all.Rdata. This is repeated here from up above, comment out.
 
 ``` r
-source("GIDEON_subset_bacterial.R")
+# source("GIDEON_subset_bacterial.R")
 ```
-
-    ## [1] "rows including all types of diseases"
-    ## [1] 10574
-    ## [1] "number of bacterial diseases  in df_all"
-    ## [1] 129
-    ## [1] "rows in df_all -- only bacterial diseases"
-    ## [1] 904
-    ## [1] "rows in df_all -- including mammals with Label = 0"
-    ## [1] 10000
 
 Graph counts across mammalian orders. Use df\_all.Rdata. Includes humans among primates
 

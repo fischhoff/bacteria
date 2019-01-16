@@ -48,13 +48,6 @@ Save as GIDEON.Rdata, including unique diseases associated with each mammal taxo
 source("GIDEON_read.R")
 ```
 
-####Get bacterial diseases in GIDEON
-In GIDEON, filter: Disease --> Agent --> bacterium. Copy diseases into google sheet GIDEON_bacterium_dx 
-Subset GIDEON.Rdata with GIDEON_bacterium_dx so that GIDEON contains only bacterial diseases
-```{r}
-source("GIDEON_subset_bacterial.R")
-```
-
 ###2. Match bacterial dx to pathogen spp names
 
 ####GIDEON data: subset to include only non-carnivores and non-primates 
@@ -98,12 +91,20 @@ Output list of parasites for checking in NCBI, parasiteGMPD_tax_report.txt. Outp
 source("mammal_zdx_assemble.R")
 ```
 
+####Get bacterial diseases in GIDEON
+In GIDEON, filter: Disease --> Agent --> bacterium. Copy diseases into google sheet GIDEON_bacterium_dx. Add bacteria there. 
+Subset df_all.Rdata with GIDEON_bacterium_dx so that GIDEON contains only bacterial diseases
+```{r}
+source("GIDEON_subset_bacterial.R")
+```
+
+
 ####Assemble mammal (df_all) and human data (human_bacteria). Save as df_all. Note that human_bacteria also includes bacteria found in other mammals.  
 ```{r}
 source("human_mammal.R")
 ```
 
-Graph vectors associated with each host order
+Graph vectors associated with each host order. This assigns vectors from human data to non-human, but does not resave this as new dataframe
 ```{r host_vector}
 source("host_vector.R")
 plot
@@ -163,9 +164,9 @@ Comment out, use instead full taxonomy downloaded from NCBI
 # source("parasite_zdx_ncbi.R")
 ```
 
-Subset df_all by bacterial diseases (excluding mammals with no diseases). Save df_all.Rdata.
+Subset df_all by bacterial diseases (excluding mammals with no diseases). Save df_all.Rdata. This is repeated here from up above, comment out. 
 ```{r GIDEON_subset_bacterial}
-source("GIDEON_subset_bacterial.R")
+# source("GIDEON_subset_bacterial.R")
 ```
 
 Graph counts across mammalian orders. Use df_all.Rdata. Includes humans among primates
