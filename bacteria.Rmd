@@ -12,7 +12,6 @@ knitr::opts_chunk$set(echo = TRUE)
 Scrape GIDEON database for more up-to-date dataset of mammal hosts and diseases. 
 
 ##Strategy
-
 Integrate data on host species, bacterial species and traits, and human disease outcomes.
 Visually summarize bacteria causing disease in mammals.    
 Apply generalized boosted models (GBM) to predict transmissibility and human disease outcomes based on bacterial traits. 
