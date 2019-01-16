@@ -9,7 +9,7 @@ all = merge(nodes, names)
 
 
 #find the id of Bacteria
-out =NULL
+
 species_id = which(all$type == "scientific name" & all$rank == "species")
 sp = all[species_id,]
 save(sp, file = "sp.Rdata")
