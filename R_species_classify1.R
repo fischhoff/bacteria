@@ -6,7 +6,7 @@ print(dim)
 ptm<-proc.time()
 
 a = 100
-for (a in 1:2){
+for (a in 1:100){
 # for (a in 1:dim){
   tmp =classification(sp$id[a], db = "ncbi")
   tmp = tmp[[1]]

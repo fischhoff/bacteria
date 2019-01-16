@@ -2,11 +2,12 @@
 pkgTest <- function(x)
 {
   if (x %in% rownames(installed.packages()) == FALSE) {
-    install.packages(x, dependencies= TRUE)    
+    install.packages(x, dependencies= TRUE,repos = "http://cran.us.r-project.org")    
   }
   library(x, character.only = TRUE)
 }
-neededPackages <- c("data.table", "dplyr", "reshape2", "corrplot", "RColorBrewer", "taxize", "myTAI", "usethis", "taxizedb", "stringr",
+#installing curl before taxize
+neededPackages <- c("data.table", "dplyr", "reshape2", "corrplot", "RColorBrewer","curl", "taxize", "myTAI", "usethis", "taxizedb", "stringr",
                     "naniar", "Hmisc",
                     "ggplot2",
                     "CHNOSZ"

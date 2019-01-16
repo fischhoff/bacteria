@@ -116,6 +116,7 @@ Get species in NCBI; then use "classification" in package "taxize" to get full c
 ```{r species_classify}
 #create list of species
 source("species_classify.R")
+#classify each species 
 source("R_species_classify1.R")
 ```
 
