@@ -114,7 +114,7 @@ plot
 
 ####Get id and children of bacteria.
 Version using taxizedb. This works.  
-```{r}
+```{r taxizedb_children}
 source("taxizedb_children.R")
 ```
 
@@ -153,13 +153,6 @@ Get species in NCBI; then use "classification" in package "taxize" to get full c
 #source("R_species_classify1.R")
 ```
 
-####Classify bacteria
-Use classification in taxize. Note this currently only does part of dataset, would take ~45 min to do all. 
-```{r R_classify_bacteria}
-source("R_classify_bacteria.R")
-```
-
-
 
 Upload "parasiteGMPD.csv" to NCBI website (https://www.ncbi.nlm.nih.gov/Taxonomy/TaxIdentifier/tax_identifier.cgi). Choose option to save to file from website. Save file to working directory as "parasiteGMPD_tax_report.txt"
 Use "parasiteGMPD_tax_report.txt" to correct pathogen species names by merging with df_parasite, with new field "preferred.name". Note that some of the preferred.names (e.g. Borelliela) do not match GMPD names (Borrelia). Save df_parasite.Rdata that includes records for mammals without any parasites.
@@ -171,6 +164,22 @@ Comment out, use instead full taxonomy downloaded from NCBI
 Subset df_all by bacterial diseases (excluding mammals with no diseases). Save df_all.Rdata. This is repeated here from up above, comment out. 
 ```{r GIDEON_subset_bacterial}
 # source("GIDEON_subset_bacterial.R")
+```
+
+####Compare pathogenic bacteria to bacteria in NCBI
+outputs: bacteria_species.Rdata (master list of bacteria); 
+out_synonym.Rdata (synonyms of species that were not found in master list but are in NCBI); 
+df_all.Rdata (mammals  with and without bacteria, with bacteria names corrected and assigned to taxonomic level);
+not_found.csv, bacteria not found in NCBI
+```{r}
+source("R_bacteria_lists_compare.R")
+```
+
+
+####Classify bacteria
+Use classification in taxize to classify to order all bacteria in master list. Note this currently only does part of dataset, would take ~8 hours to do all. Input: bacteria_species.Rdata. Output: bacteria_species_out.Rdata
+```{r R_classify_bacteria}
+source("R_classify_bacteria.R")
 ```
 
 Graph counts across mammalian orders. Use df_all.Rdata. Includes humans among primates
@@ -244,13 +253,6 @@ Assemble all GMPD datasets
 
 
 ###Data: Global Mammal Parasite Database
-
-###Mammal pathogen data
-####read in GMPD and save
-check out taxonomy dataset 
-```{r}
-#source("GMPD.R")
-```
 
 ###Data: bacterial traits
 

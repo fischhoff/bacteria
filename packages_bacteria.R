@@ -10,7 +10,7 @@ pkgTest <- function(x)
 neededPackages <- c("data.table", "dplyr", "reshape2", "corrplot", "RColorBrewer","curl", "taxize", "myTAI", "usethis", "taxizedb", "stringr",
                     "naniar", "Hmisc",
                     "ggplot2",
-                    "CHNOSZ"
+                    "CHNOSZ", "stringi"
                     )
 #"rstan"
 for (package in neededPackages){pkgTest(package)}

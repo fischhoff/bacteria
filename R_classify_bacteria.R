@@ -1,5 +1,5 @@
-df = read.csv("bacteria_species.csv")
-
+# df = read.csv("bacteria_species.csv")
+load("bacteria_species.Rdata")
 #Start the clock
 ptm<-proc.time()
 out =NULL#initialize output
@@ -10,8 +10,8 @@ for (a in 1:10){
   tmp = tmp[[1]]
   nrows = dim(tmp)[1]
   if (nrows>0){#if at least one row
-    tmp_species = subset(tmp, rank == "species")
-    tmp$species = tmp_species$name 
+    # tmp_species = subset(tmp, rank == "species")
+    # tmp$species = tmp_species$name 
     tmp_order = subset(tmp, rank == "order")
     dim_o = dim(tmp_order)[1]
     tmp$order = ""

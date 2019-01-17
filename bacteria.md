@@ -114,7 +114,7 @@ Study design
 
     ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
     ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
-    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/RtmpZTg8u8/devtools30c2195b13c9/TIBHannover-BacDiveR-7108220'  \
+    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/RtmpBs0Ido/devtools6ef7559e1eb/TIBHannover-BacDiveR-7108220'  \
     ##   --library='/Library/Frameworks/R.framework/Versions/3.4/Resources/library'  \
     ##   --install-tests
 
@@ -256,6 +256,9 @@ source("taxizedb_children.R")
     ## Skipping install of 'taxizedb' from a github remote, the SHA1 (0e5e4cc4) has not changed since last install.
     ##   Use `force = TRUE` to force installation
 
+    ##    user  system elapsed 
+    ##       0       0       0
+
 Version using Catalog of Life. Works but comment out because returns only ~9000 species, which seems like small number, and because not NCBI
 
 ``` r
@@ -295,17 +298,6 @@ Get all species and classify Get species in NCBI; then use "classification" in p
 #source("R_species_classify1.R")
 ```
 
-#### Classify bacteria
-
-Use classification in taxize. Note this currently only does part of dataset, would take ~45 min to do all.
-
-``` r
-source("R_classify_bacteria.R")
-```
-
-    ##         user       system      elapsed 
-    ## 0.0065000000 0.0002166667 0.0069166667
-
 Upload "parasiteGMPD.csv" to NCBI website (<https://www.ncbi.nlm.nih.gov/Taxonomy/TaxIdentifier/tax_identifier.cgi>). Choose option to save to file from website. Save file to working directory as "parasiteGMPD\_tax\_report.txt" Use "parasiteGMPD\_tax\_report.txt" to correct pathogen species names by merging with df\_parasite, with new field "preferred.name". Note that some of the preferred.names (e.g. Borelliela) do not match GMPD names (Borrelia). Save df\_parasite.Rdata that includes records for mammals without any parasites. Comment out, use instead full taxonomy downloaded from NCBI
 
 ``` r
@@ -317,6 +309,28 @@ Subset df\_all by bacterial diseases (excluding mammals with no diseases). Save 
 ``` r
 # source("GIDEON_subset_bacterial.R")
 ```
+
+#### Compare pathogenic bacteria to bacteria in NCBI
+
+outputs: bacteria\_species.Rdata (master list of bacteria); out\_synonym.Rdata (synonyms of species that were not found in master list but are in NCBI); df\_all.Rdata (mammals with and without bacteria, with bacteria names corrected and assigned to taxonomic level); not\_found.csv, bacteria not found in NCBI
+
+``` r
+source("R_bacteria_lists_compare.R")
+```
+
+    ## [1] 99441     3
+    ## [1] 99353     3
+
+#### Classify bacteria
+
+Use classification in taxize to classify to order all bacteria in master list. Note this currently only does part of dataset, would take ~8 hours to do all. Input: bacteria\_species.Rdata. Output: bacteria\_species\_out.Rdata
+
+``` r
+source("R_classify_bacteria.R")
+```
+
+    ##         user       system      elapsed 
+    ## 0.0032166667 0.0001833333 0.0037666667
 
 Graph counts across mammalian orders. Use df\_all.Rdata. Includes humans among primates
 
@@ -443,16 +457,6 @@ plot
 Assemble all GMPD datasets
 
 ### Data: Global Mammal Parasite Database
-
-### Mammal pathogen data
-
-#### read in GMPD and save
-
-check out taxonomy dataset
-
-``` r
-#source("GMPD.R")
-```
 
 ### Data: bacterial traits
 

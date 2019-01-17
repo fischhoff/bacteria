@@ -11,5 +11,25 @@ library(taxizedb)
 
 x <- downstream(2, db = "ncbi", downto = "species")
 x <- x[[1]]
+a = 1
+#Start the clock
+ptm<-proc.time()
+
+# for (a in 1:10){#for each bacterial species
+
+# for (a in 1:dim(x)[1]){#for each bacterial species
+#   class = classification(x$childtaxa_id[a], db = "ncbi")
+#   class = class[[1]]
+#   order = subset(class, rank == "order")
+#   if (dim(order)[1]>0){
+#     x$order[a]=order$name
+#   } else {
+#     x$order[a]=""
+#   }
+# }
+
+#Stop the clock
+print((proc.time()-ptm)/60)
+
 bacteria_species = x
 write.csv(bacteria_species, file = "bacteria_species.csv")
