@@ -1,5 +1,9 @@
 #read in data on non-carnivore, non-primate mammals. 
-df1 = read.csv("animal-dx-parasites_20190103.csv")
+df1 = read.csv("animal-dx-parasites - animal-dx-parasites.csv")
+df1$parasiteGMPD=as.character(df1$parasiteGMPD)
+df1$ParasiteCorrectedNameGMPD = as.character(df1$ParasiteCorrectedNameGMPD)
+corrected_inds = which(df1$ParasiteCorrectedNameGMPD !="")
+df1$parasiteGMPD[corrected_inds]=df1$ParasiteCorrectedNameGMPD[corrected_inds]
 names(df1)
 keep.col = c("Spp",
              "Order",

@@ -85,22 +85,22 @@ source("parse_vector.R")
 ```
 
 
-####Assemble data on primates (prim-zdx-parasites.xls, google sheet), carnivores (carnivore-zdx-parasites.csv, dropbox), other mammals (animal-dx-parasites_20190103.csv, google sheet).
+####Assemble data on primates (prim-zdx-parasites.xls, google sheet), carnivores (carnivore-zdx-parasites.csv, dropbox), other mammals ("animal-dx-parasites - animal-dx-parasites.csv", exported from google sheet).
 Output list of parasites for checking in NCBI, parasiteGMPD_tax_report.txt. Output df_parasite.Rdata (mammals with parasites), df_no_parasite.Rdata (no parasite), and df_all (mammals w/ and w/o parasite) 
-```{r}
+```{r mammal_zdx_assemble}
 source("mammal_zdx_assemble.R")
 ```
 
 ####Get bacterial diseases in GIDEON
 In GIDEON, filter: Disease --> Agent --> bacterium. Copy diseases into google sheet GIDEON_bacterium_dx. Add bacteria there. 
 Subset df_all.Rdata with GIDEON_bacterium_dx so that GIDEON contains only bacterial diseases
-```{r}
+```{r GIDEON_subset_bacterial}
 source("GIDEON_subset_bacterial.R")
 ```
 
 
 ####Assemble mammal (df_all) and human data (human_bacteria). Save as df_all. Note that human_bacteria also includes bacteria found in other mammals.  
-```{r}
+```{r human_mammal}
 source("human_mammal.R")
 ```
 

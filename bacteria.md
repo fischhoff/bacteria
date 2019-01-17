@@ -114,7 +114,7 @@ Study design
 
     ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
     ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
-    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/RtmpBs0Ido/devtools6ef7559e1eb/TIBHannover-BacDiveR-7108220'  \
+    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/RtmpaJBwb4/devtools8f1520b8106/TIBHannover-BacDiveR-7108220'  \
     ##   --library='/Library/Frameworks/R.framework/Versions/3.4/Resources/library'  \
     ##   --install-tests
 
@@ -196,7 +196,7 @@ source("parse_vector.R")
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-#### Assemble data on primates (prim-zdx-parasites.xls, google sheet), carnivores (carnivore-zdx-parasites.csv, dropbox), other mammals (animal-dx-parasites\_20190103.csv, google sheet).
+#### Assemble data on primates (prim-zdx-parasites.xls, google sheet), carnivores (carnivore-zdx-parasites.csv, dropbox), other mammals ("animal-dx-parasites - animal-dx-parasites.csv", exported from google sheet).
 
 Output list of parasites for checking in NCBI, parasiteGMPD\_tax\_report.txt. Output df\_parasite.Rdata (mammals with parasites), df\_no\_parasite.Rdata (no parasite), and df\_all (mammals w/ and w/o parasite)
 
@@ -204,7 +204,7 @@ Output list of parasites for checking in NCBI, parasiteGMPD\_tax\_report.txt. Ou
 source("mammal_zdx_assemble.R")
 ```
 
-    ## [1] 9180    9
+    ## [1] 9181    9
     ## [1] 666   5
     ## [1] 499  11
 
@@ -217,13 +217,13 @@ source("GIDEON_subset_bacterial.R")
 ```
 
     ## [1] "rows including all types of diseases"
-    ## [1] 10345
+    ## [1] 10346
     ## [1] "number of bacterial diseases  in df_all"
     ## [1] 129
     ## [1] "rows in df_all -- only bacterial diseases"
-    ## [1] 675
+    ## [1] 676
     ## [1] "rows in df_all -- including mammals with Label = 0"
-    ## [1] 9771
+    ## [1] 9772
 
 #### Assemble mammal (df\_all) and human data (human\_bacteria). Save as df\_all. Note that human\_bacteria also includes bacteria found in other mammals.
 
@@ -329,8 +329,8 @@ Use classification in taxize to classify to order all bacteria in master list. N
 source("R_classify_bacteria.R")
 ```
 
-    ##         user       system      elapsed 
-    ## 0.0032166667 0.0001833333 0.0037666667
+    ##        user      system     elapsed 
+    ## 0.004016667 0.000150000 0.004183333
 
 Graph counts across mammalian orders. Use df\_all.Rdata. Includes humans among primates
 
