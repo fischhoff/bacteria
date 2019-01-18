@@ -1,5 +1,6 @@
 # df = read.csv("bacteria_species.csv")
 load("bacteria_species.Rdata")
+
 #Start the clock
 ptm<-proc.time()
 out =NULL#initialize output
