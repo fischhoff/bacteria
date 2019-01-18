@@ -82,6 +82,8 @@ source("parse_species_bacteria.R")
 Parse vectors
 ```{r}
 source("parse_vector.R")
+plot1
+plot2
 ```
 
 
@@ -214,10 +216,20 @@ plot
 
 
 Use classification in taxize to classify to order all bacteria in master list. Note this takes ~8 hours to do all. Input: bacteria_species.Rdata. Output: bacteria_species_out.Rdata
-Commenting this out for now, plan to run on workstation
+Commenting this out for now, has been run on workstation
 ```{r R_classify_bacteria}
-source("R_classify_bacteria.R")
+#source("R_classify_bacteria.R")
 ```
+
+Assign pathogen status to bacteria_species_out. Make graph of frequency of bacteria by order, for pathogenic and non-pathogenic bacteria. Input: bacteria_species_out.Rdata; df_all.Rdata
+Output: bacteria_species_out1.Rdata
+```{r R_graph_bacteria_order_pathogen_status}
+source("R_graph_bacteria_order_pathogen_status.R")
+source("R_graph_bacteria_order_pathogen_status1.R")
+plot
+```
+
+
 
 Graph counts across mammalian orders. Use df_all.Rdata. Includes humans among primates
 ```{r mammal_orders_graph}

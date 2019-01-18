@@ -42,9 +42,9 @@ Study design
 
 #### install and load required packages
 
-    ## Removing package from 'C:/Users/fischhoffi/Documents/R/win-library/3.5'
+    ## Removing package from '/Library/Frameworks/R.framework/Versions/3.4/Resources/library'
     ## (as 'lib' is unspecified)
-    ## Removing package from 'C:/Users/fischhoffi/Documents/R/win-library/3.5'
+    ## Removing package from '/Library/Frameworks/R.framework/Versions/3.4/Resources/library'
     ## (as 'lib' is unspecified)
 
     ## 
@@ -54,21 +54,17 @@ Study design
     ## 
     ##     :=
 
-    ## Installing package into 'C:/Users/fischhoffi/Documents/R/win-library/3.5'
-    ## (as 'lib' is unspecified)
+    ## 
+    ##   There is a binary version available but the source version is
+    ##   later:
+    ##        binary source needs_compilation
+    ## tibble  1.4.2  2.0.1              TRUE
 
-    ## package 'tibble' successfully unpacked and MD5 sums checked
+    ## installing the source package 'tibble'
+
     ## 
     ## The downloaded binary packages are in
-    ##  C:\Users\fischhoffi\AppData\Local\Temp\RtmpaEyhFq\downloaded_packages
-
-    ## Installing package into 'C:/Users/fischhoffi/Documents/R/win-library/3.5'
-    ## (as 'lib' is unspecified)
-
-    ## package 'tidyselect' successfully unpacked and MD5 sums checked
-    ## 
-    ## The downloaded binary packages are in
-    ##  C:\Users\fischhoffi\AppData\Local\Temp\RtmpaEyhFq\downloaded_packages
+    ##  /var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T//RtmpW5aBIA/downloaded_packages
 
     ## 
     ## Attaching package: 'dplyr'
@@ -132,8 +128,20 @@ Study design
     ## 
     ##     slice
 
-    ## Skipping install of 'BacDiveR' from a github remote, the SHA1 (71082209) has not changed since last install.
-    ##   Use `force = TRUE` to force installation
+    ## Downloading GitHub repo TIBHannover/BacDiveR@master
+    ## from URL https://api.github.com/repos/TIBHannover/BacDiveR/zipball/master
+
+    ## Installing BacDiveR
+
+    ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
+    ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
+    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/RtmpW5aBIA/devtools1da6534663f7/TIBHannover-BacDiveR-7108220'  \
+    ##   --library='/Library/Frameworks/R.framework/Versions/3.4/Resources/library'  \
+    ##   --install-tests
+
+    ## 
+
+    ## Installation failed: Command failed (3)
 
     ## Skipping install of 'taxizedb' from a github remote, the SHA1 (7ee9741a) has not changed since last install.
     ##   Use `force = TRUE` to force installation
@@ -218,6 +226,20 @@ source("parse_vector.R")
     ## Saving 7 x 5 in image
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+``` r
+plot1
+```
+
+![](bacteria_files/figure-markdown_github/unnamed-chunk-4-1.png)
+
+``` r
+plot2
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](bacteria_files/figure-markdown_github/unnamed-chunk-4-2.png)
 
 #### Assemble data on primates (prim-zdx-parasites.xls, google sheet), carnivores (carnivore-zdx-parasites.csv, dropbox), other mammals ("animal-dx-parasites - animal-dx-parasites.csv", exported from google sheet).
 
@@ -341,8 +363,8 @@ outputs: bacteria\_species.Rdata (master list of bacteria); out\_synonym.Rdata (
 source("R_bacteria_lists_compare.R")
 ```
 
-    ## [1] 99443     3
-    ## [1] 99355     3
+    ## [1] 99441     3
+    ## [1] 99353     3
 
 #### Classify bacteria
 
@@ -360,8 +382,8 @@ source("R_name2taxid.R")
 source("R_classify_bacteria_observed.R")
 ```
 
-    ##      user    system   elapsed 
-    ## 0.3201667 0.0445000 0.3648333
+    ##        user      system     elapsed 
+    ## 0.266283333 0.009516667 0.284333333
 
 Make graph of pathogenic bacteria by bacteria order, with different colors by bacteria family
 
@@ -399,14 +421,21 @@ plot
 
 ![](bacteria_files/figure-markdown_github/R_graph_host_order_pathogen_order-1.png)
 
-Use classification in taxize to classify to order all bacteria in master list. Note this takes ~8 hours to do all. Input: bacteria\_species.Rdata. Output: bacteria\_species\_out.Rdata Commenting this out for now, plan to run on workstation
+Use classification in taxize to classify to order all bacteria in master list. Note this takes ~8 hours to do all. Input: bacteria\_species.Rdata. Output: bacteria\_species\_out.Rdata Commenting this out for now, has been run on workstation
 
 ``` r
-source("R_classify_bacteria.R")
+#source("R_classify_bacteria.R")
 ```
 
-    ##      user    system   elapsed 
-    ## 204.17400  27.98417 232.39683
+Assign pathogen status to bacteria\_species\_out. Make graph of frequency of bacteria by order, for pathogenic and non-pathogenic bacteria. Input: bacteria\_species\_out.Rdata; df\_all.Rdata Output: bacteria\_species\_out1.Rdata
+
+``` r
+source("R_graph_bacteria_order_pathogen_status.R")
+source("R_graph_bacteria_order_pathogen_status1.R")
+plot
+```
+
+![](bacteria_files/figure-markdown_github/unnamed-chunk-11-1.png)
 
 Graph counts across mammalian orders. Use df\_all.Rdata. Includes humans among primates
 

@@ -45,7 +45,7 @@ plot <- ggplot(data = human_dx_vector, aes(x = vector))+
   geom_histogram(stat = "count")+
   ylab("count of diseases")
 
-plot
+plot1 = plot
 
 ggsave(plot, filename = "vector_count.jpg")
 
@@ -57,7 +57,7 @@ plot <- ggplot(data = human_dx_vector_sum, aes(x = n))+
   ylab("count of diseases")+
   xlab("number of vectors per disease")
 
-plot
+plot2 = plot
 
 ggsave(plot, filename = "vector_count_by_disease.jpg")
 
