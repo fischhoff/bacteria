@@ -18,13 +18,13 @@ pkgTest <- function(x)
   library(x, character.only = TRUE)
 }
 #installing curl before taxize
-#removed "stringi"
+#removed "stringi", nope need that 
 #"glue" and "rlang" seem needed for dplyr, after deleting each from library manually
 neededPackages <- c("data.table", "glue", "rlang","tibble", "tidyselect", "dplyr", "reshape2", "corrplot", 
                     "RColorBrewer","curl", "taxize", "myTAI", "usethis", "stringr",
                     "naniar", "Hmisc",
                     "ggplot2",
-                    "CHNOSZ"
+                    "CHNOSZ", "stringi"
                     )
 #"rstan"
 for (package in neededPackages){pkgTest(package)}

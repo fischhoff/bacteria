@@ -42,8 +42,40 @@ Study design
 
 #### install and load required packages
 
+    ## Removing package from 'C:/Users/fischhoffi/Documents/R/win-library/3.5'
+    ## (as 'lib' is unspecified)
+    ## Removing package from 'C:/Users/fischhoffi/Documents/R/win-library/3.5'
+    ## (as 'lib' is unspecified)
+
+    ## 
+    ## Attaching package: 'rlang'
+
+    ## The following object is masked from 'package:data.table':
+    ## 
+    ##     :=
+
+    ## Installing package into 'C:/Users/fischhoffi/Documents/R/win-library/3.5'
+    ## (as 'lib' is unspecified)
+
+    ## package 'tibble' successfully unpacked and MD5 sums checked
+    ## 
+    ## The downloaded binary packages are in
+    ##  C:\Users\fischhoffi\AppData\Local\Temp\RtmpaEyhFq\downloaded_packages
+
+    ## Installing package into 'C:/Users/fischhoffi/Documents/R/win-library/3.5'
+    ## (as 'lib' is unspecified)
+
+    ## package 'tidyselect' successfully unpacked and MD5 sums checked
+    ## 
+    ## The downloaded binary packages are in
+    ##  C:\Users\fischhoffi\AppData\Local\Temp\RtmpaEyhFq\downloaded_packages
+
     ## 
     ## Attaching package: 'dplyr'
+
+    ## The following object is masked from 'package:glue':
+    ## 
+    ##     collapse
 
     ## The following objects are masked from 'package:data.table':
     ## 
@@ -65,13 +97,6 @@ Study design
     ##     dcast, melt
 
     ## corrplot 0.84 loaded
-
-    ## 
-    ## Attaching package: 'taxizedb'
-
-    ## The following objects are masked from 'package:taxize':
-    ## 
-    ##     children, classification, downstream
 
     ## Loading required package: lattice
 
@@ -107,20 +132,18 @@ Study design
     ## 
     ##     slice
 
-    ## Downloading GitHub repo TIBHannover/BacDiveR@master
-    ## from URL https://api.github.com/repos/TIBHannover/BacDiveR/zipball/master
+    ## Skipping install of 'BacDiveR' from a github remote, the SHA1 (71082209) has not changed since last install.
+    ##   Use `force = TRUE` to force installation
 
-    ## Installing BacDiveR
-
-    ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
-    ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
-    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/RtmpvT5i06/devtools167626a5ee2b/TIBHannover-BacDiveR-7108220'  \
-    ##   --library='/Library/Frameworks/R.framework/Versions/3.4/Resources/library'  \
-    ##   --install-tests
+    ## Skipping install of 'taxizedb' from a github remote, the SHA1 (7ee9741a) has not changed since last install.
+    ##   Use `force = TRUE` to force installation
 
     ## 
+    ## Attaching package: 'taxizedb'
 
-    ## Installation failed: Command failed (3)
+    ## The following objects are masked from 'package:taxize':
+    ## 
+    ##     children, classification, downstream
 
 ### 1. Get bacteria-caused dx in GIDEON
 
@@ -256,9 +279,6 @@ Version using taxizedb. This works. If this doesn't work, try restarting R.
 source("taxizedb_children.R")
 ```
 
-    ## Skipping install of 'taxizedb' from a github remote, the SHA1 (7ee9741a) has not changed since last install.
-    ##   Use `force = TRUE` to force installation
-
     ##    user  system elapsed 
     ##       0       0       0
 
@@ -315,14 +335,14 @@ Subset df\_all by bacterial diseases (excluding mammals with no diseases). Save 
 
 #### Compare pathogenic bacteria to bacteria in NCBI
 
-outputs: bacteria\_species.Rdata (master list of bacteria); out\_synonym.Rdata (synonyms of species that were not found in master list but are in NCBI); df\_all.Rdata (mammals with and without bacteria, with bacteria names corrected and assigned to taxonomic level); not\_found.csv, bacteria not found in NCBI
+outputs: bacteria\_species.Rdata (master list of bacteria); out\_synonym.Rdata (synonyms of species that were not found in master list but are in NCBI); df\_all.Rdata (mammals with and without bacteria, with bacteria names corrected and assigned to taxonomic level); not\_found.csv, bacteria not found in NCBI. This uses stri\_detect\_fixed, from stringi
 
 ``` r
 source("R_bacteria_lists_compare.R")
 ```
 
-    ## [1] 99441     3
-    ## [1] 99353     3
+    ## [1] 99443     3
+    ## [1] 99355     3
 
 #### Classify bacteria
 
@@ -341,7 +361,7 @@ source("R_classify_bacteria_observed.R")
 ```
 
     ##      user    system   elapsed 
-    ## 0.2446667 0.0075000 0.2586667
+    ## 0.3201667 0.0445000 0.3648333
 
 Make graph of pathogenic bacteria by bacteria order, with different colors by bacteria family
 
@@ -382,8 +402,11 @@ plot
 Use classification in taxize to classify to order all bacteria in master list. Note this takes ~8 hours to do all. Input: bacteria\_species.Rdata. Output: bacteria\_species\_out.Rdata Commenting this out for now, plan to run on workstation
 
 ``` r
-#source("R_classify_bacteria.R")
+source("R_classify_bacteria.R")
 ```
+
+    ##      user    system   elapsed 
+    ## 204.17400  27.98417 232.39683
 
 Graph counts across mammalian orders. Use df\_all.Rdata. Includes humans among primates
 

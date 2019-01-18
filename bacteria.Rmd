@@ -170,7 +170,7 @@ Subset df_all by bacterial diseases (excluding mammals with no diseases). Save d
 outputs: bacteria_species.Rdata (master list of bacteria); 
 out_synonym.Rdata (synonyms of species that were not found in master list but are in NCBI); 
 df_all.Rdata (mammals  with and without bacteria, with bacteria names corrected and assigned to taxonomic level);
-not_found.csv, bacteria not found in NCBI
+not_found.csv, bacteria not found in NCBI. This uses stri_detect_fixed, from stringi
 ```{r}
 source("R_bacteria_lists_compare.R")
 ```
