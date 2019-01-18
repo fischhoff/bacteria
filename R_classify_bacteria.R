@@ -7,6 +7,7 @@ out =NULL#initialize output
 df = bacteria_species
 dim = dim(df)[1]
 # for (a in 1:10){
+out_all = NULL#initialize data frame for all data
 for (a in 1:dim){
   #Sys.sleep(0.15)
   tmp = classification(df$childtaxa_id[a], db = "ncbi")
@@ -24,8 +25,11 @@ for (a in 1:dim){
     out = rbind(out,tmp)
     
   }
+  out_all = rbind(out_all, tmp)
 }
 
+bacteria_taxonomy = out_all
+save(bacteria_taxonomy, file = "bacteria_taxonomy.Rdata")
 #Stop the clock
 print((proc.time()-ptm)/60)
 bacteria_species_out = out

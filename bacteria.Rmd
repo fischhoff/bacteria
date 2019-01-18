@@ -216,7 +216,7 @@ plot
 Use classification in taxize to classify to order all bacteria in master list. Note this takes ~8 hours to do all. Input: bacteria_species.Rdata. Output: bacteria_species_out.Rdata
 Commenting this out for now, plan to run on workstation
 ```{r R_classify_bacteria}
-#source("R_classify_bacteria.R")
+source("R_classify_bacteria.R")
 ```
 
 Graph counts across mammalian orders. Use df_all.Rdata. Includes humans among primates

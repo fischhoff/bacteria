@@ -1,3 +1,14 @@
+#remove packages if they are present in lib
+pkgrmTest <- function(x)
+{
+  if (x %in% rownames(installed.packages()) == TRUE) {
+    remove.packages(x)    
+  }
+}
+
+packagesRemove <- c("tibble", "tidyselect")
+for (package in packagesRemove){pkgrmTest(package)}
+
 #not installing taxize in order to use dev version
 pkgTest <- function(x)
 {
@@ -7,10 +18,13 @@ pkgTest <- function(x)
   library(x, character.only = TRUE)
 }
 #installing curl before taxize
-neededPackages <- c("data.table", "dplyr", "reshape2", "corrplot", "RColorBrewer","curl", "taxize", "myTAI", "usethis", "taxizedb", "stringr",
+#removed "stringi"
+#"glue" and "rlang" seem needed for dplyr, after deleting each from library manually
+neededPackages <- c("data.table", "glue", "rlang","tibble", "tidyselect", "dplyr", "reshape2", "corrplot", 
+                    "RColorBrewer","curl", "taxize", "myTAI", "usethis", "stringr",
                     "naniar", "Hmisc",
                     "ggplot2",
-                    "CHNOSZ", "stringi"
+                    "CHNOSZ"
                     )
 #"rstan"
 for (package in neededPackages){pkgTest(package)}
@@ -23,3 +37,6 @@ for (package in neededPackages){pkgTest(package)}
 # library("biomartr")
 
 devtools::install_github('TIBHannover/BacDiveR')
+
+devtools::install_github("ropensci/taxizedb")
+library(taxizedb)

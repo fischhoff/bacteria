@@ -1,5 +1,4 @@
-devtools::install_github("ropensci/taxizedb")
-library(taxizedb)
+
 
 # x <- downstream("Bryophyta", db = "ncbi", downto="family")
 # tibble::as_tibble(x$Bryophyta)
