@@ -33,3 +33,5 @@ plot <- ggplot(df,
 plot
 ggsave(filename = "host_vector_stacked.jpg",
        plot = plot)
+# df_all = df
+# save(df_all, file = "df_all.Rdata")

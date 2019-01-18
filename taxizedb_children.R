@@ -11,7 +11,7 @@ library(taxizedb)
 
 x <- downstream(2, db = "ncbi", downto = "species")
 x <- x[[1]]
-a = 1
+# a = 1
 #Start the clock
 ptm<-proc.time()
 

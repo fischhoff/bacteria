@@ -94,7 +94,7 @@ source("mammal_zdx_assemble.R")
 ####Get bacterial diseases in GIDEON
 In GIDEON, filter: Disease --> Agent --> bacterium. Copy diseases into google sheet GIDEON_bacterium_dx. Add bacteria there. 
 Subset df_all.Rdata with GIDEON_bacterium_dx so that GIDEON contains only bacterial diseases
-```{r GIDEON_subset_bacterial}
+```{r GIDEON_subset_bacterial_1}
 source("GIDEON_subset_bacterial.R")
 ```
 
@@ -104,7 +104,7 @@ source("GIDEON_subset_bacterial.R")
 source("human_mammal.R")
 ```
 
-Graph vectors associated with each host order. This assigns vectors from human data to non-human, but does not resave this as new dataframe
+Graph vectors associated with each host order. This assigns vectors from human data to non-human, but does not resaves this as new dataframe 
 ```{r host_vector}
 source("host_vector.R")
 plot
@@ -113,7 +113,7 @@ plot
 
 
 ####Get id and children of bacteria.
-Version using taxizedb. This works.  
+Version using taxizedb. This works. If this doesn't work, try restarting R.  
 ```{r taxizedb_children}
 source("taxizedb_children.R")
 ```
@@ -139,7 +139,7 @@ This uses parent and child relationships to build up species list. This code is 
 # source("ncbi_taxonomy_read.R")
 ```
 
-####Fix taxonomy in df_all.Rdata using ncbi_taxonomy.Rdata. Commenting out for now because still working on ncbi_taxonomy_read.R
+Fix taxonomy in df_all.Rdata using ncbi_taxonomy.Rdata. Commenting out because ncbi_taxonomy_read.R didn't work.
 ```{r}
 #source("taxonomy_correct.Rdata")
 ```
@@ -156,7 +156,7 @@ Get species in NCBI; then use "classification" in package "taxize" to get full c
 
 Upload "parasiteGMPD.csv" to NCBI website (https://www.ncbi.nlm.nih.gov/Taxonomy/TaxIdentifier/tax_identifier.cgi). Choose option to save to file from website. Save file to working directory as "parasiteGMPD_tax_report.txt"
 Use "parasiteGMPD_tax_report.txt" to correct pathogen species names by merging with df_parasite, with new field "preferred.name". Note that some of the preferred.names (e.g. Borelliela) do not match GMPD names (Borrelia). Save df_parasite.Rdata that includes records for mammals without any parasites.
-Comment out, use instead full taxonomy downloaded from NCBI
+Comment out, use instead full taxonomy from NCBI
 ```{r parasite_zdx_ncbi}
 # source("parasite_zdx_ncbi.R")
 ```
@@ -177,9 +177,46 @@ source("R_bacteria_lists_compare.R")
 
 
 ####Classify bacteria
-Use classification in taxize to classify to order all bacteria in master list. Note this currently only does part of dataset, would take ~8 hours to do all. Input: bacteria_species.Rdata. Output: bacteria_species_out.Rdata
+Use classification in taxize to classify to order all bacteria in df_all. Input: df_all.Rdata. Output: df_all.Rdata
+```{r R_classify_bacteria_observed}
+#add taxonomy id from ncbi
+source("R_name2taxid.R")
+#use tax_id to get pathogen order, family, genus
+source("R_classify_bacteria_observed.R")
+```
+
+Make graph of pathogenic bacteria by bacteria  order, with different colors by bacteria family 
+```{r R_graph_pathogen_order_family}
+source("R_graph_pathogen_order_family.R")
+plot
+```
+
+
+Make graph of pathogenic bacteria by bacteria  order, with different colors by bacteria genus (no legend for genus)
+```{r R_graph_pathogen_order_genus}
+source("R_graph_pathogen_order_genus.R")
+plot
+```
+
+
+Make graph of pathogenic bacteria by bacteria  order, with different colors by host order
+```{r R_graph_pathogen_order_host_order}
+source("R_graph_pathogen_order_host_order.R")
+plot
+```
+
+Make graph of host order, with different colors by bacteria order
+```{r R_graph_host_order_pathogen_order}
+source("R_graph_host_order_pathogen_order.R")
+plot
+```
+
+
+
+Use classification in taxize to classify to order all bacteria in master list. Note this takes ~8 hours to do all. Input: bacteria_species.Rdata. Output: bacteria_species_out.Rdata
+Commenting this out for now, plan to run on workstation
 ```{r R_classify_bacteria}
-source("R_classify_bacteria.R")
+#source("R_classify_bacteria.R")
 ```
 
 Graph counts across mammalian orders. Use df_all.Rdata. Includes humans among primates
@@ -232,10 +269,11 @@ source("bacteria_zdx_gmpd_traits.R")
 ###6. Data visualization: summary “state of knowledge” on bacteria causing disease in mammals or humans 
 
 ####Graph counts of host-bacteria pairs by bacterial order
-Note: this is imperfect because only GMPD-represented species are present. 
+Note: this is imperfect because only GMPD-represented species are present. Comment out
 ```{r bacteria_order}
-source("bacteria_order.R")
-plot
+# source("bacteria_order.R")
+# plot
+
 ```
 
 ####Graph counts of host-bacteria pairs by traits in GMPD

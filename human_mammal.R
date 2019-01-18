@@ -20,4 +20,6 @@ df$row = ""
 
 df_all$vector = ""
 df_all = rbind(df_all, df)
+print("rows in df_all")
+print(dim(df_all)[1])
 save(df_all, file = "df_all.Rdata")

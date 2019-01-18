@@ -3,8 +3,10 @@ load("bacteria_species.Rdata")
 #Start the clock
 ptm<-proc.time()
 out =NULL#initialize output
-for (a in 1:10){
-  # for (a in 1:dim){
+df = bacteria_species
+dim = dim(df)[1]
+# for (a in 1:10){
+for (a in 1:dim){
   #Sys.sleep(0.15)
   tmp = classification(df$childtaxa_id[a], db = "ncbi")
   tmp = tmp[[1]]

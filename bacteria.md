@@ -114,7 +114,7 @@ Study design
 
     ## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
     ##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
-    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/RtmpaJBwb4/devtools8f1520b8106/TIBHannover-BacDiveR-7108220'  \
+    ##   '/private/var/folders/0d/qm_pqljx11s_ddc42g1_yscr0000gn/T/RtmpvT5i06/devtools167626a5ee2b/TIBHannover-BacDiveR-7108220'  \
     ##   --library='/Library/Frameworks/R.framework/Versions/3.4/Resources/library'  \
     ##   --install-tests
 
@@ -231,7 +231,10 @@ source("GIDEON_subset_bacterial.R")
 source("human_mammal.R")
 ```
 
-Graph vectors associated with each host order. This assigns vectors from human data to non-human, but does not resave this as new dataframe
+    ## [1] "rows in df_all"
+    ## [1] 10004
+
+Graph vectors associated with each host order. This assigns vectors from human data to non-human, but does not resaves this as new dataframe
 
 ``` r
 source("host_vector.R")
@@ -247,13 +250,13 @@ plot
 
 #### Get id and children of bacteria.
 
-Version using taxizedb. This works.
+Version using taxizedb. This works. If this doesn't work, try restarting R.
 
 ``` r
 source("taxizedb_children.R")
 ```
 
-    ## Skipping install of 'taxizedb' from a github remote, the SHA1 (0e5e4cc4) has not changed since last install.
+    ## Skipping install of 'taxizedb' from a github remote, the SHA1 (7ee9741a) has not changed since last install.
     ##   Use `force = TRUE` to force installation
 
     ##    user  system elapsed 
@@ -283,7 +286,7 @@ Read in NCBI taxonomy This uses parent and child relationships to build up speci
 # source("ncbi_taxonomy_read.R")
 ```
 
-#### Fix taxonomy in df\_all.Rdata using ncbi\_taxonomy.Rdata. Commenting out for now because still working on ncbi\_taxonomy\_read.R
+Fix taxonomy in df\_all.Rdata using ncbi\_taxonomy.Rdata. Commenting out because ncbi\_taxonomy\_read.R didn't work.
 
 ``` r
 #source("taxonomy_correct.Rdata")
@@ -298,7 +301,7 @@ Get all species and classify Get species in NCBI; then use "classification" in p
 #source("R_species_classify1.R")
 ```
 
-Upload "parasiteGMPD.csv" to NCBI website (<https://www.ncbi.nlm.nih.gov/Taxonomy/TaxIdentifier/tax_identifier.cgi>). Choose option to save to file from website. Save file to working directory as "parasiteGMPD\_tax\_report.txt" Use "parasiteGMPD\_tax\_report.txt" to correct pathogen species names by merging with df\_parasite, with new field "preferred.name". Note that some of the preferred.names (e.g. Borelliela) do not match GMPD names (Borrelia). Save df\_parasite.Rdata that includes records for mammals without any parasites. Comment out, use instead full taxonomy downloaded from NCBI
+Upload "parasiteGMPD.csv" to NCBI website (<https://www.ncbi.nlm.nih.gov/Taxonomy/TaxIdentifier/tax_identifier.cgi>). Choose option to save to file from website. Save file to working directory as "parasiteGMPD\_tax\_report.txt" Use "parasiteGMPD\_tax\_report.txt" to correct pathogen species names by merging with df\_parasite, with new field "preferred.name". Note that some of the preferred.names (e.g. Borelliela) do not match GMPD names (Borrelia). Save df\_parasite.Rdata that includes records for mammals without any parasites. Comment out, use instead full taxonomy from NCBI
 
 ``` r
 # source("parasite_zdx_ncbi.R")
@@ -323,14 +326,64 @@ source("R_bacteria_lists_compare.R")
 
 #### Classify bacteria
 
-Use classification in taxize to classify to order all bacteria in master list. Note this currently only does part of dataset, would take ~8 hours to do all. Input: bacteria\_species.Rdata. Output: bacteria\_species\_out.Rdata
+Use classification in taxize to classify to order all bacteria in df\_all. Input: df\_all.Rdata. Output: df\_all.Rdata
 
 ``` r
-source("R_classify_bacteria.R")
+#add taxonomy id from ncbi
+source("R_name2taxid.R")
 ```
 
-    ##        user      system     elapsed 
-    ## 0.004016667 0.000150000 0.004183333
+    ## [1] 755
+
+``` r
+#use tax_id to get pathogen order, family, genus
+source("R_classify_bacteria_observed.R")
+```
+
+    ##      user    system   elapsed 
+    ## 0.2446667 0.0075000 0.2586667
+
+Make graph of pathogenic bacteria by bacteria order, with different colors by bacteria family
+
+``` r
+source("R_graph_pathogen_order_family.R")
+plot
+```
+
+![](bacteria_files/figure-markdown_github/R_graph_pathogen_order_family-1.png)
+
+Make graph of pathogenic bacteria by bacteria order, with different colors by bacteria genus (no legend for genus)
+
+``` r
+source("R_graph_pathogen_order_genus.R")
+plot
+```
+
+![](bacteria_files/figure-markdown_github/R_graph_pathogen_order_genus-1.png)
+
+Make graph of pathogenic bacteria by bacteria order, with different colors by host order
+
+``` r
+source("R_graph_pathogen_order_host_order.R")
+plot
+```
+
+![](bacteria_files/figure-markdown_github/R_graph_pathogen_order_host_order-1.png)
+
+Make graph of host order, with different colors by bacteria order
+
+``` r
+source("R_graph_host_order_pathogen_order.R")
+plot
+```
+
+![](bacteria_files/figure-markdown_github/R_graph_host_order_pathogen_order-1.png)
+
+Use classification in taxize to classify to order all bacteria in master list. Note this takes ~8 hours to do all. Input: bacteria\_species.Rdata. Output: bacteria\_species\_out.Rdata Commenting this out for now, plan to run on workstation
+
+``` r
+#source("R_classify_bacteria.R")
+```
 
 Graph counts across mammalian orders. Use df\_all.Rdata. Includes humans among primates
 
@@ -420,21 +473,12 @@ source("bacteria_zdx_gmpd_traits.R")
 
 #### Graph counts of host-bacteria pairs by bacterial order
 
-Note: this is imperfect because only GMPD-represented species are present.
+Note: this is imperfect because only GMPD-represented species are present. Comment out
 
 ``` r
-source("bacteria_order.R")
+# source("bacteria_order.R")
+# plot
 ```
-
-    ## Warning: Ignoring unknown parameters: binwidth, bins, pad
-
-    ## Saving 7 x 5 in image
-
-``` r
-plot
-```
-
-![](bacteria_files/figure-markdown_github/bacteria_order-1.png)
 
 #### Graph counts of host-bacteria pairs by traits in GMPD
 
