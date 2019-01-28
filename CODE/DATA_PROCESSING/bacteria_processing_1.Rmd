@@ -1,0 +1,20 @@
+---
+title: "bacteria_processing_1"
+author: "Ilya"
+date: "1/28/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###load data on zoonotic bacteria
+```{r}
+wd = getwd()
+setwd(wd)
+file.exists("../../DATA/df_all.Rdata")#two dots and slash to go up two levels
+load("../../DATA/df_all.Rdata")#load df_all
+
+```
+

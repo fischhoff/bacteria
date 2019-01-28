@@ -224,8 +224,14 @@ Commenting this out for now, has been run on workstation
 Assign pathogen status to bacteria_species_out. Make graph of frequency of bacteria by order, for pathogenic and non-pathogenic bacteria. Input: bacteria_species_out.Rdata; df_all.Rdata
 Output: bacteria_species_out1.Rdata
 ```{r R_graph_bacteria_order_pathogen_status}
+wd = getwd()
+setwd(wd)
+# file.exists("../../DATA/BIOLOGICAL/df_all.Rdata")#two dots and slash to go up two levels
+load("df_all.Rdata")
+save(df_all, file= "DATA/df_all.Rdata")
+
 source("R_graph_bacteria_order_pathogen_status.R")
-source("R_graph_bacteria_order_pathogen_status1.R")
+source("R_graph_bacteria_order_pathogen_status1.R")#make the graph
 plot
 ```
 
@@ -296,13 +302,6 @@ plot
 
 
 ###SCRATCH below here
-
-####Visualize data on number of bacterial disease per host species, facet wrap by host order
-
-Assemble all GMPD datasets
-
-
-###Data: Global Mammal Parasite Database
 
 ###Data: bacterial traits
 
