@@ -36,7 +36,7 @@ for (package in neededPackages){pkgTest(package)}
 # install.packages("biomartr")
 # library("biomartr")
 
-devtools::install_github('TIBHannover/BacDiveR')
+# devtools::install_github('TIBHannover/BacDiveR')
 
 devtools::install_github("ropensci/taxizedb")
 library(taxizedb)

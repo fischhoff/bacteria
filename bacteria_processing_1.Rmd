@@ -1,0 +1,50 @@
+---
+title: "bacteria_processing_1"
+author: "Ilya"
+date: "1/28/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+####install and load required packages
+```{r packages, echo=FALSE}
+source("packages_bacteria1.R")
+```
+
+
+###1. Get bacteria-caused dx in GIDEON   
+###2. Match dx to pathogen spp. names
+###3. Match spp. names (from GIDEON zdx and GMPD) to traits (in GMPD & other)
+###4. Compile master list of bacteria spp & traits
+###5. Feature construction with bacterial traits
+###6. Data visualization: summary “state of knowledge” on bacteria causing disease in mammals or humans
+###7. Use traits to predict transmissibility and human disease outcomes
+
+###2. Match dx to pathogen spp. names
+####Include non-zoonotic pathogenic bacteria
+
+####get zoonotic and non-zoonotic pathogens from GMPD and assign taxonomic ID only for those that are species-level
+select only bacteria using info in G_taxonomy
+```{r R_name2taxid_GMPD}
+source("R_name2taxid_GMPD.R")
+# source(paste0(wd,"/R_name2taxid_GMPD.R"))
+# ../CODE/DATA_PROCESSING/
+```
+
+####classify pathogens in GMPD to order, family, genus. Make G_classified.Rdata and save 
+```{r R_classify_bacteria_observed_GMPD}
+source("R_classify_bacteria_observed_GMPD.R")
+```
+
+
+####load data on zoonotic bacteria 
+```{r R_human_zoonotic_non_zoonotic}
+# source("R_human_zoonotic_non_zoonotic1.R")
+```
+
+
+

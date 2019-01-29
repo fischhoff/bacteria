@@ -116,6 +116,7 @@ write.csv(not_found, file = "not_found.csv")
 #combine out with df_no_parasite
 df_all = rbind(out, df_no_parasite)
 save(df_all, file = "df_all.Rdata")
+# save(df_all, file = "../DATA/df_all.Rdata")
 #df: remove X, add out_master, find unique
 df = df[,c("childtaxa_id", "childtaxa_name", "rank")]
 out_master= out_master[,c("childtaxa_id", "childtaxa_name", "rank")]
