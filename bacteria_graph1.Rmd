@@ -1,0 +1,42 @@
+---
+title: "bacteria_graph_1"
+author: "Ilya"
+date: "1/30/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+####install and load required packages
+```{r packages, echo=FALSE}
+source("packages_bacteria2.R")
+```
+
+###1. Get bacteria-caused dx in GIDEON   
+###2. Match dx to pathogen spp. names
+###3. Match spp. names (from GIDEON zdx and GMPD) to traits (in GMPD & other)
+###4. Compile master list of bacteria spp & traits
+###5. Feature construction with bacterial traits
+###6. Data visualization: summary “state of knowledge” on bacteria causing disease in mammals or humans
+###7. Use traits to predict transmissibility and human disease outcomes
+
+##6. Data visualization: summary “state of knowledge” on bacteria causing disease in mammals or humans
+
+###Processing data
+####load bacteria_pathogenic_mammals.Rdata and make graph of bacteria order vs. host order
+```{r}
+source("R_graph_pathogen_order_host_order1.R")
+plot
+```
+
+####make graph of histogram of number of hosts per bacteria, across zoonotic categories (human only, zoonotic, wild only)
+```{r}
+source("R_bacteria_host_species_hist_graph1.R")
+plot
+```
+
+
+
+

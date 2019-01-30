@@ -1,5 +1,3 @@
-getwd()
-
 load("G_classified.Rdata")#load 
 # G_classified = G
 G_classified$host_pathogen = paste(G_classified$host_species, 
@@ -36,6 +34,7 @@ df$vector[df$vector_type != "none"]=1
 # load("../DATA/PROCESSED/G_classified.Rdata")#load 
 G_classified = rename(G_classified, host_species = HostCorrectedName )
 G_classified = rename(G_classified, host_order = HostOrder )
+
 
 #find records in G_classified that have not already been added to df_all
 #concatenate host and pathogen
@@ -107,21 +106,42 @@ df_add$nonclose = NA
 df_add$intermediate = NA
 out = unique(out)#not sure why there are multiple records but this removes them
 out <-out %>%
-  select(-c(ParasiteTraitsCitation, ParType
+  select(-c(ParasiteTraitsCitation, ParType,
+            species_pathogen_classified,
+            pathogen_species_match_classified
   ))
 #assign zoonotic category
+df_add$pathogen_original = NA
 df_add$zoonotic_category = NA
 df_add$zoonotic_category[df_add$host_species == "Homo sapiens"]="human"
 df_add$zoonotic_category[df_add$host_species != "Homo sapiens"]="zoonotic"
 
+#could delete these next three lines
 df_add1 <- df_add %>%
   group_by(disease) %>%
   mutate(host_types_count = length(unique(zoonotic_category)))
 
+out_2 = NULL
+ud = unique(df_add1$disease)
+for (a in 1:length(ud)){
+  tmp = subset(df_add1, disease == ud[a])
+  zoonotic = subset(tmp, zoonotic_category =="zoonotic")
+  dimz = dim(zoonotic)[1]
+  human = subset(tmp, zoonotic_category == "human")
+  dimh = dim(human)[1]
+  if (dimh >0 & dimz >0){
+    tmp$zoonotic_category = "zoonotic"
+  } else if (dimh >0 & dimz == 0){
+    tmp$zoonotic_category = "human only"
+  }
+  out_2 = rbind(out_2, tmp)
+}
+df_add1 <- out_2
+
 df_add <- df_add1# 
 
-df_add$zoonotic_category[df_add$host_types_count == 1]="human only"
-df_add$zoonotic_category[df_add$host_types_count == 2]="zoonotic"
+# df_add$zoonotic_category[df_add$host_types_count == 1]="human only"
+# df_add$zoonotic_category[df_add$host_types_count == 2]="zoonotic"
 print(table(df_add$zoonotic_category))
 
 #remove temporary field
