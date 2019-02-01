@@ -1,0 +1,89 @@
+---
+title: "BacDiveR_check"
+author: "Ilya"
+date: "1/31/2019"
+output: github_document
+---
+
+###look at data for one species from BacDive
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+####install packages
+```{r packages}
+pkgTest <- function(x)
+{
+  if (x %in% rownames(installed.packages()) == FALSE) {
+    install.packages(x, dependencies= TRUE,repos = "http://cran.us.r-project.org")    
+  }
+  library(x, character.only = TRUE)
+}
+neededPackages <- c("data.table", "glue", "rlang","tibble", "tidyselect", "dplyr", "ggplot2", "tidyr"
+                    )
+#"rstan"
+for (package in neededPackages){pkgTest(package)}
+
+```
+
+
+
+```{r}
+D = readRDS("Data for Bacillus halotolerans.rds")
+#find out field names
+names(D)
+#look at unique fields
+unique(D$field)
+#look at unique sections
+unique(D$section)
+#get just taxonomy name
+test = subset(D, section == "taxonomy_name")
+#look at unique subsections
+unique(test$subsection)
+#get just strains
+test_strains = subset(test, subsection == "strains")
+#see what fields are for strain
+unique(test_strains$field)
+#check is_type_strain
+test_strain_type = subset(test_strains, field == "is_type_strain")
+table(test_strain_type$bacdive_id,test_strain_type$value)
+```
+
+####find out what values should be there for one ID
+```{r}
+id_1 = subset(D, bacdive_id == "100619")
+unique(id_1$value)
+```
+
+
+###try spread and dcast
+```{r}
+#spread
+D <- D[,c("bacdive_id",
+          "field", 
+          "value")]
+# D$value[is.na(D$value)] <- -9999#this gets duplicate error, as does replacing with blank
+
+D_uni=distinct(D)#make sure rows are unique
+dim(D_uni)
+#remove NA values
+D_uni = D_uni[!is.na(D_uni$value),]
+dim(D_uni)
+D_uni = subset(D_uni, field != "ID_reference")
+D_uni = subset(D_uni, field != "ID_reference1")
+D_uni = subset(D_uni, field != "ID_reference2")
+
+# Spread_1 = spread(D_uni, key = c(bacdive_id, field), value= value)
+#this makes columns equal to ID and row equal to field name
+# Spread_1 = spread(D_uni, key = bacdive_id, value = value)
+Spread_2 = spread(D_uni, key = field, value = value)
+
+write.csv(Spread_2,file = "bacdive_1_species_wide.csv")
+#this also works
+library(data.table)
+# D_cast = dcast(setDT(D), bacdive_id ~ field, value.var = "value")
+D_cast = dcast(setDT(D_uni), bacdive_id ~ field, value.var = "value")
+
+```
+
+
