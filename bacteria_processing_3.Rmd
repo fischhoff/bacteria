@@ -1,0 +1,628 @@
+---
+title: "bacteria_processing_3"
+author: "Ilya"
+date: "6/24/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+####install and load required packages
+```{r packages, echo=FALSE}
+source("packages_bacteria1.R")
+# devtools::install_github("guiastrennec/ggplus")
+# library(ggplus)
+#https://github.com/guiastrennec/ggplus
+```
+
+
+###1. Get bacteria-caused dx in GIDEON   
+###2. Match dx to pathogen spp. names
+###3. Match spp. names (from GIDEON zdx and GMPD) to traits (in GMPD & other)
+###4. Compile master list of bacteria spp & traits
+
+
+####Check what fields are in bacteria_species_out2.Rdata
+bacteria_species_out2 includes pathogenic and non-pathogenic bacteria
+```{r}
+#commenting this out for now because it doesn't do anything new
+#source("R_graph_bacteria_order_pathogen_status3.R")
+```
+
+###read in BacDive data accessed by Wanjia Song
+
+###find out fields with at least threshold % coverage
+```{r get_proportion}
+load("../DATA/PROCESSED/Data from Backdive-2.RData")
+dim(merge)
+merge_test = unique(merge)
+dim(merge_test)
+#11752	taxonomy_name	strains_tax_PNU	species_epithet	actinomycetemcomitans
+test = subset(merge, bacdive_id == 11752 &
+                section == "taxonomy_name" &
+                subsection == "strains_tax_PNU" &
+                field == "species_epithet")
+threshold = 0.01
+D = merge
+dim(D)
+D = unique(D)
+dim(D)
+#rm(merge)
+#remove NA values
+inds.na = which(!is.na(D$value))
+D = D[inds.na,]
+id_len=length(unique(D$bacdive_id))
+D$new_field = paste(D$section, D$subsection, D$field)
+save(D, file = "../DATA/PROCESSED/D.Rdata")
+count=as.data.frame(table(D$new_field))#combination of subsection and field
+var1=count$Var1
+freq=count$Freq
+var<-list()
+freqs<-list()
+for (i in 1:length(freq)) {
+     if (freq[i]>=threshold*id_len) {#this will get fields greater than 1%
+         var[[i]]=var1[i]
+         freqs[[i]]=freq[i]
+     }
+}
+
+df=do.call(rbind, Map(data.frame, Feature_name=var, Frequency=freqs))
+
+df$Fraction = df$Frequency/id_len
+###get those seen at least 20% of time
+df20 = subset(df, Fraction >= 0.2)
+write.csv(df20, file ="variables_20_percent_coverage.csv")
+
+###get those seen at least 10% of time
+df10 = subset(df, Fraction >= 0.1)
+write.csv(df10, file ="variables_10_percent_coverage.csv")
+
+###get those seen at least 5% of time
+df05 = subset(df, Fraction >= 0.05)
+write.csv(df05, file ="variables_5_percent_coverage.csv")
+
+###get those seen at least 1% of time
+df01 = subset(df, Fraction >= 0.01)
+save(df01, file = "../DATA/PROCESSED/df01.Rdata")
+```
+
+#use df01 to subset all data for those variables
+```{r subset_01}
+load("../DATA/PROCESSED/D.RData")
+
+merge01 = subset(D, new_field %in% df01$Feature_name)
+save(merge01, file = "../DATA/PROCESSED/merge01.Rdata")
+
+merge20 = subset(D, new_field %in% df20$Feature_name)
+save(merge20, file = "../DATA/PROCESSED/merge20.Rdata")
+
+merge10 = subset(D, new_field %in% df10$Feature_name)
+save(merge10, file = "../DATA/PROCESSED/merge10.Rdata")
+
+
+```
+
+```{r data_processing}
+
+##this part is data_processing.R @
+df <- merge01
+
+df <- unique(df)
+
+df$feature_name <- paste(df$section, df$subsection, df$field)
+
+a <- df[is.element(df$feature_name, df01$Feature_name),]#df01 for 1% threshold
+
+q <- dcast(a, bacdive_id~feature_name)
+q <- q[order(q$bacdive_id),]
+
+##test with merge10
+# df10 <- merge10
+# 
+# df10 <- unique(df10)
+# 
+# df10$feature_name <- paste(df10$section, df10$subsection, df10$field)
+# 
+# a10 <- df10[is.element(df10$feature_name, df20$Feature_name),]
+
+# q <- dcast(a, bacdive_id~feature_name)
+# q <- q[order(q$bacdive_id),]
+
+
+write.csv(q, file = "df.csv", row.names = F)
+temp = read.csv("df.csv")
+dim(temp)
+# remove columns with near zero variance Global
+nzv <- nearZeroVar(q,saveMetrics=TRUE,freqCut = 95/5)
+nzv <- row.names(nzv[which(nzv$nzv==TRUE),])
+dropnzv<-names(q[ , which(names(q) %in% nzv)])
+q <- q[ , -which(names(q) %in% nzv)]
+write.csv(q, file = "dropnzvdata.csv", row.names = F)
+
+```
+
+```{r rm_fix_fields}
+##this part corresponds to Zach's one_hot_encoding.R
+#one-hot encode categorical variables
+q <- read.csv(file = "dropnzvdata.csv")
+dim(q)
+str(q)
+
+str(q, list.len=ncol(q))
+
+q$molecular_biology.GC_content.GC_content=as.character(q$molecular_biology.GC_content.GC_content)
+q$culture_growth_condition.culture_temp.temp1=as.character(q$culture_growth_condition.culture_temp.temp1)
+q$culture_growth_condition.culture_temp.temp2=as.character(q$culture_growth_condition.culture_temp.temp2)
+q$culture_growth_condition.culture_temp.temp = as.character(q$culture_growth_condition.culture_temp.temp)
+#split = strsplit(as.character(q$molecular_biology.GC_content.GC_content[905]), "-")
+rm = c("culture_growth_condition.culture_medium.media_link",
+       "culture_growth_condition.culture_medium.media_link1",
+       "culture_growth_condition.culture_medium.medium_name",
+       "culture_growth_condition.culture_medium.medium_name1",
+       "culture_growth_condition.culture_medium.medium_name2",
+       "culture_growth_condition.culture_temp.temp2","culture_growth_condition.culture_temp.test_type2",
+       "environment_sampling_isolation_source.origin.geo_loc_name",
+       "environment_sampling_isolation_source.origin.sample_type",
+       "molecular_biology.sequence.DB_sequence",
+       "molecular_biology.sequence.DB_sequence2",
+       "molecular_biology.sequence.seq_acc_num",
+       "molecular_biology.sequence.seq_acc_num1",
+       "molecular_biology.sequence.seq_acc_num2",
+       "references.reference1.NA",
+       "references.reference2.NA",
+       "references.reference3.NA",
+       "references.reference4.NA",
+       "strain_availability.strain_history.history",
+       "strain_availability.straininfo_link.URL",
+       "strain_availability.straininfo_link.URL1",
+       "strain_availability.straininfo_link.URL2",
+       "strain_availability.strains.strain_number",
+       "taxonomy_name.strains.designation",
+       "taxonomy_name.strains.full_scientific_name",
+       "taxonomy_name.strains.genus",
+       "taxonomy_name.strains.species",
+       "taxonomy_name.strains.species_epithet",
+       "taxonomy_name.strains_synonyms_PNU.pnu_synonym",
+       "taxonomy_name.strains_tax_PNU.status_gen",
+       "taxonomy_name.strains_tax_PNU.status_spec",
+       "environment_sampling_isolation_source.origin.country",
+      # "taxonomy_name.strains_tax_PNU.phylum",
+       "molecular_biology.sequence.DB_sequence1",
+       "taxonomy_name.strains.class",
+       "taxonomy_name.strains.family",
+       "taxonomy_name.strains.ordo",
+       "taxonomy_name.strains.phylum",
+       "taxonomy_name.strains_tax_PNU.class",
+       "taxonomy_name.strains_tax_PNU.family",
+       "taxonomy_name.strains_tax_PNU.genus",
+       "taxonomy_name.strains_tax_PNU.full_scientific_name",
+       #"taxonomy_name.strains_tax_PNU.species",#use species as identifier
+       "taxonomy_name.strains_tax_PNU.species_epithet")#30
+keep = setdiff(names(q), rm)
+q = q[,keep]
+
+q$molecular_biology.GC_content.GC_content= as.character(q$molecular_biology.GC_content.GC_content)
+
+a = 904
+#fix GC content
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$molecular_biology.GC_content.GC_content[a])){
+    if (grepl("±", q$molecular_biology.GC_content.GC_content[a])==TRUE){
+        split = strsplit(q$molecular_biology.GC_content.GC_content[a], "±")
+        q$molecular_biology.GC_content.GC_content[a] =as.numeric(split[[1]][1])
+    }
+    length_char = str_length(q$molecular_biology.GC_content.GC_content[a])
+    if (length_char > 4){
+        split = strsplit(q$molecular_biology.GC_content.GC_content[a], "-")
+        q$molecular_biology.GC_content.GC_content[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+      
+  }
+}
+
+#fix morphology_physiology.halophily.salt_concentration
+q$morphology_physiology.halophily.salt_concentration=as.character(q$morphology_physiology.halophily.salt_concentration)
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$morphology_physiology.halophily.salt_concentration[a])){
+    q$morphology_physiology.halophily.salt_concentration[a]=str_replace(q$morphology_physiology.halophily.salt_concentration[a],
+                                                                        pattern = ">",
+                                                                        replacement = "")
+    q$morphology_physiology.halophily.salt_concentration[a]=str_replace(q$morphology_physiology.halophily.salt_concentration[a],
+                                                                        pattern = "<",
+                                                                        replacement = "")
+    grep_test = grepl("-", q$morphology_physiology.halophily.salt_concentration[a])
+    if (grep_test == TRUE){
+        split = strsplit(q$morphology_physiology.halophily.salt_concentration[a], "-")
+        q$morphology_physiology.halophily.salt_concentration[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+  }
+}
+q$morphology_physiology.halophily.salt_concentration=as.numeric(q$morphology_physiology.halophily.salt_concentration)
+
+
+#fix morphology_physiology.colony_morphology.colony_len
+q$morphology_physiology.colony_morphology.colony_len=as.character(q$morphology_physiology.colony_morphology.colony_len)
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$morphology_physiology.colony_morphology.colony_len[a])){
+    q$morphology_physiology.colony_morphology.colony_len[a]=str_replace(q$morphology_physiology.colony_morphology.colony_len[a],
+                                                                        pattern = ">",
+                                                                        replacement = "")
+    q$morphology_physiology.colony_morphology.colony_len[a]=str_replace(q$morphology_physiology.colony_morphology.colony_len[a],
+                                                                        pattern = "<",
+                                                                        replacement = "")
+    grep_test = grepl("-", q$morphology_physiology.colony_morphology.colony_len[a])
+    if (grep_test == TRUE){
+        split = strsplit(q$morphology_physiology.colony_morphology.colony_len[a], "-")
+        q$morphology_physiology.colony_morphology.colony_len[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+  }
+}
+q$morphology_physiology.colony_morphology.colony_len=as.numeric(q$morphology_physiology.colony_morphology.colony_len)
+
+#fix morphology_physiology.cell_morphology.cell_len
+q$morphology_physiology.cell_morphology.cell_len=as.character(q$morphology_physiology.cell_morphology.cell_len)
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$morphology_physiology.cell_morphology.cell_len[a])){
+    q$morphology_physiology.cell_morphology.cell_len[a]=str_replace(q$morphology_physiology.cell_morphology.cell_len[a],
+                                                                        pattern = ">",
+                                                                        replacement = "")
+    q$morphology_physiology.cell_morphology.cell_len[a]=str_replace(q$morphology_physiology.cell_morphology.cell_len[a],
+                                                                        pattern = "<",
+                                                                        replacement = "")
+    grep_test = grepl("-", q$morphology_physiology.cell_morphology.cell_len[a])
+    if (grep_test == TRUE){
+      split = strsplit(q$morphology_physiology.cell_morphology.cell_len[a], "-")
+      q$morphology_physiology.cell_morphology.cell_len[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+  }
+}
+q$morphology_physiology.cell_morphology.cell_len=as.numeric(q$morphology_physiology.cell_morphology.cell_len)
+
+
+#fix morphology_physiology.cell_morphology.cell_width
+q$morphology_physiology.cell_morphology.cell_width=as.character(q$morphology_physiology.cell_morphology.cell_width)
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$morphology_physiology.cell_morphology.cell_width[a])){
+    q$morphology_physiology.cell_morphology.cell_width[a]=str_replace(q$morphology_physiology.cell_morphology.cell_width[a],
+                                                                    pattern = ">",
+                                                                    replacement = "")
+    q$morphology_physiology.cell_morphology.cell_width[a]=str_replace(q$morphology_physiology.cell_morphology.cell_width[a],
+                                                                    pattern = "<",
+                                                                    replacement = "")
+    grep_test = grepl("-", q$morphology_physiology.cell_morphology.cell_width[a])
+    if (grep_test == TRUE){
+      split = strsplit(q$morphology_physiology.cell_morphology.cell_width[a], "-")
+      q$morphology_physiology.cell_morphology.cell_width[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+  }
+}
+q$morphology_physiology.cell_morphology.cell_width=as.numeric(q$morphology_physiology.cell_morphology.cell_width)
+
+
+q$molecular_biology.GC_content.GC_content= as.numeric(q$molecular_biology.GC_content.GC_content)
+
+keep = c("application_interaction.risk_assessment.biosafety_level",
+         "molecular_biology.GC_content.GC_content",
+         "taxonomy_name.strains_tax_PNU.species",
+         "culture_growth_condition.culture_temp.temperature_range",
+         "environment_sampling_isolation_source.origin.continent",
+         # "taxonomy_name.strains_tax_PNU.phylum",
+         "taxonomy_name.strains_tax_PNU.species",
+         "environment_sampling_isolation_source.origin.latitude",
+         "environment_sampling_isolation_source.origin.longitude",
+         "morphology_physiology.spore_formation.type",
+         "morphology_physiology.oxygen_tolerance.oxygen_tol",
+         #"morphology_physiology.met_test.metabolite_test",#don't know what this means
+         #"morphology_physiology.met_production.metabolite_prod",#don't know what this means
+         #"morphology_physiology.met_antibiotica.metabolite_antib",#don't know what this means
+         #"morphology_physiology.halophily.salt_concentration",#FIXED to make numeric. Includes >, <. This is relative to multiple possible measures -- growth, optimum. discard. 
+         #"morphology_physiology.met_antibiotica.ab_resistance_conc",#don't know what this means. Seems to refer to concentration of antibiotic in test. Exclude. 
+         "morphology_physiology.colony_morphology.colony_len",#FIXED to make numeric. Includes >, <
+         "morphology_physiology.colony_morphology.hemolysis_type",#don't know what this means
+         "morphology_physiology.cell_morphology.motility",#factor
+         "morphology_physiology.cell_morphology.gram_stain",#factor
+         "morphology_physiology.cell_morphology.flagellum_arrangement",#factor
+          "morphology_physiology.cell_morphology.cell_len",#FIXED to make numeric. assumning all in same units
+         "morphology_physiology.cell_morphology.cell_shape",#factor
+         "morphology_physiology.cell_morphology.cell_width",#need to FIX to make numeric 
+         "culture_growth_condition.culture_temp.temp",#need to FIX to make numeric; refers to growth vs. optimum; exclude
+         "culture_growth_condition.culture_pH.pH",
+         "bacdive_id")#need to FIX to make numeric; refers to growth vs. optimum; exclude
+
+q = q[,keep]
+
+save(q, file = "q.Rdata")
+load("q.Rdata")
+bacteria_traits_fields_subset = q
+write.csv(bacteria_traits_fields_subset, file = "bacteria_traits_fields_subset.csv", 
+          row.names = FALSE)
+```
+
+###one hot encode
+```{r hot_one}
+load("q.Rdata")
+names(q)
+dmy <- dummyVars(" ~ .", data = q,fullRank = T, sep=".")
+df_transformed <- data.frame(predict(dmy, newdata = q))
+
+write.csv(df_transformed, file = "onehotdata.csv", row.names = F)
+```
+
+###visualize features
+```{r graphs}
+load("q.Rdata")
+
+#biosafety
+plot <- ggplot(data = q, aes(x = application_interaction.risk_assessment.biosafety_level))+
+  geom_histogram(stat = "count")
+plot
+
+ggsave(filename = "biosafety.jpeg", plot = plot)
+
+#temperature range
+plot <- ggplot(data = q, aes(x = culture_growth_condition.culture_temp.temperature_range))+
+  geom_histogram(stat = "count")
+plot
+
+ggsave(filename = "temp.jpeg", plot = plot)
+
+
+#continent
+plot <- ggplot(data = q, aes(x = environment_sampling_isolation_source.origin.continent))+
+  geom_histogram(stat = "count")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+plot
+
+ggsave(filename = "continent.jpeg", plot = plot)
+
+#phylum
+# plot <- ggplot(data = q, aes(x = taxonomy_name.strains_tax_PNU.phylum))+
+#   geom_histogram(stat = "count")+
+#   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+# plot
+# 
+# ggsave(filename = "phylum.jpeg", plot = plot)
+
+
+#GC content
+plot <- ggplot(data = q, aes(x = molecular_biology.GC_content.GC_content))+
+  geom_histogram()+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+plot
+
+ggsave(filename = "GC.jpeg", plot = plot)
+
+#morphology_physiology.spore_formation.type
+plot <- ggplot(data = q, aes(x = morphology_physiology.spore_formation.type))+
+  geom_histogram(stat = "count")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
+  scale_y_log10()
+plot
+
+ggsave(filename = "formation-type.jpeg", plot = plot)
+length(which(!is.na(q$morphology_physiology.spore_formation.type)))/dim(q)[1]#1%
+
+#morphology_physiology.oxygen_tolerance.oxygen_tol
+plot <- ggplot(data = q, aes(x = morphology_physiology.oxygen_tolerance.oxygen_tol))+
+  geom_histogram(stat = "count")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+  scale_y_log10()
+
+plot
+
+ggsave(filename = "morphology_physiology.oxygen_tolerance.oxygen_tol.jpeg", plot = plot)
+
+#morphology_physiology.cell_morphology.motility
+plot <- ggplot(data = q, aes(x = morphology_physiology.cell_morphology.motility))+
+  geom_histogram(stat = "count")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+  scale_y_log10()
+
+plot
+
+ggsave(filename = "morphology_physiology.cell_morphology.motility.jpeg", plot = plot)
+
+#morphology_physiology.cell_morphology.gram_stain
+plot <- ggplot(data = q, aes(x = morphology_physiology.cell_morphology.gram_stain))+
+  geom_histogram(stat = "count")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+  scale_y_log10()
+
+plot
+
+ggsave(filename = "morphology_physiology.cell_morphology.gram_stain.jpeg", plot = plot)
+
+#morphology_physiology.cell_morphology.flagellum_arrangement
+plot <- ggplot(data = q, aes(x = morphology_physiology.cell_morphology.flagellum_arrangement))+
+  geom_histogram(stat = "count")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+  scale_y_log10()
+
+plot
+
+ggsave(filename = "morphology_physiology.cell_morphology.flagellum_arrangement.jpeg", plot = plot)
+
+#morphology_physiology.cell_morphology.cell_shape
+plot <- ggplot(data = q, aes(x = morphology_physiology.cell_morphology.cell_shape))+
+  geom_histogram(stat = "count")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+  scale_y_log10()
+
+plot
+
+ggsave(filename = "morphology_physiology.cell_morphology.cell_shape.jpeg", plot = plot)
+
+#morphology_physiology.colony_morphology.hemolysis_type
+plot <- ggplot(data = q, aes(x = morphology_physiology.colony_morphology.hemolysis_type))+
+  geom_histogram(stat = "count")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+  scale_y_log10()
+
+plot
+
+ggsave(filename = "morphology_physiology.colony_morphology.hemolysis_type.jpeg", plot = plot)
+
+#morphology_physiology.colony_morphology.colony_len
+plot <- ggplot(data = q, aes(x = morphology_physiology.colony_morphology.colony_len))+
+  geom_histogram()+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+plot
+
+ggsave(filename = "morphology_physiology.colony_morphology.colony_len.jpeg", plot = plot)
+
+#morphology_physiology.cell_morphology.cell_len
+plot <- ggplot(data = q, aes(x = morphology_physiology.cell_morphology.cell_len))+
+  geom_histogram()+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
+  scale_y_log10()+
+  scale_x_log10()
+plot
+
+ggsave(filename = "morphology_physiology.cell_morphology.cell_len.jpeg", plot = plot)
+
+#morphology_physiology.cell_morphology.cell_width
+plot <- ggplot(data = q, aes(x = morphology_physiology.cell_morphology.cell_width))+
+  geom_histogram()+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
+  scale_y_log10()
+plot
+
+ggsave(filename = "morphology_physiology.cell_morphology.cell_width.jpeg", plot = plot)
+
+#morphology_physiology.cell_morphology.cell_width log
+plot <- ggplot(data = q, aes(x = morphology_physiology.cell_morphology.cell_width))+
+  geom_histogram()+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
+  scale_y_log10()+
+  scale_x_log10()
+plot
+
+ggsave(filename = "morphology_physiology.cell_morphology.cell_width_log10.jpeg", plot = plot)
+
+
+
+#legnth_to_width
+q$length_to_width = q$morphology_physiology.cell_morphology.cell_len/q$morphology_physiology.cell_morphology.cell_width
+plot <- ggplot(data = q, aes(x = length_to_width))+
+  geom_histogram()+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
+  scale_y_log10()+
+  scale_x_log10()
+plot
+
+ggsave(filename = "length_to_width.jpeg", plot = plot)
+
+
+```
+
+
+###5. Feature construction with bacterial traits
+
+```{r}
+
+# library(sjPlot)
+# 
+# q <- read.csv(file = "dropnzvdata.csv")
+# num <- read.csv(file = "numeric_variables.csv")
+# 
+# cat_vars <- data.frame(
+# q$culture_growth_condition.culture_medium.medium_name,
+# q$culture_growth_condition.culture_medium.medium_name1,
+# q$culture_growth_condition.culture_medium.medium_name2,
+# q$culture_growth_condition.culture_temp.temperature_range,
+# q$environment_sampling_isolation_source.origin.continent,
+# q$environment_sampling_isolation_source.origin.country,
+# q$environment_sampling_isolation_source.origin.geo_loc_name,
+# q$environment_sampling_isolation_source.origin.sample_type,
+# q$molecular_biology.GC_content.GC_content,
+# q$molecular_biology.sequence.DB_sequence,
+# q$molecular_biology.sequence.DB_sequence1,
+# q$molecular_biology.sequence.DB_sequence2,
+# q$molecular_biology.sequence.seq_acc_num,
+# q$molecular_biology.sequence.seq_acc_num1,
+# q$molecular_biology.sequence.seq_acc_num2,
+# q$references.reference1.NA,
+# q$references.reference2.NA,
+# q$references.reference3.NA,
+# q$references.reference4.NA,
+# q$strain_availability.strain_history.history,
+# q$strain_availability.strains.strain_number,
+# q$taxonomy_name.strains.class,
+# q$taxonomy_name.strains.designation,
+# q$taxonomy_name.strains.family,
+# q$taxonomy_name.strains.full_scientific_name,
+# q$taxonomy_name.strains.genus,
+# q$taxonomy_name.strains.is_type_strain,
+# q$taxonomy_name.strains.ordo,
+# q$taxonomy_name.strains.phylum,
+# q$taxonomy_name.strains.species,
+# q$taxonomy_name.strains.species_epithet,
+# q$taxonomy_name.strains_synonyms_PNU.pnu_synonym,
+# q$taxonomy_name.strains_tax_PNU.class,
+# q$taxonomy_name.strains_tax_PNU.family,
+# q$taxonomy_name.strains_tax_PNU.full_scientific_name,
+# q$taxonomy_name.strains_tax_PNU.genus,
+# q$taxonomy_name.strains_tax_PNU.is_type_strain,
+# q$taxonomy_name.strains_tax_PNU.phylum,
+# q$taxonomy_name.strains_tax_PNU.species,
+# q$taxonomy_name.strains_tax_PNU.species_epithet,
+# q$taxonomy_name.strains_tax_PNU.status_gen,
+# q$taxonomy_name.strains_tax_PNU.status_spec)
+# 
+# df[] <- lapply(cat_vars,as.integer)
+# sjp.corr(df)
+# sjt.corr(df)
+# 
+# cmatrix <- matrix()
+# i = 1
+# j = 2
+# 
+# q <- cat_vars
+# while (i <= length(q) - 1) {
+#   while (j <= length(q)) {
+#     row1 <- colnames(q)[i]
+#     row2 <- colnames(q)[j]
+#     df <- q[!is.na(q[row1,]) & !is.na(q[row2],),]
+#     t <- table(df[row1,], df[row2],)
+#     cmatrix[i][j] <- chisq.test(t, correct = F)$p.value
+#     j = j+1
+#     print(i,j)
+#   }
+#   i = i+1
+# }
+# 
+# q <- read.csv(file = "dropnzvdata.csv", header=TRUE, sep=",", stringsAsFactors=FALSE)
+# 
+# num_vars <- data.frame(
+# q$application_interaction.risk_assessment.ID_reference,
+# q$culture_growth_condition.culture_medium.ID_reference,
+# q$culture_growth_condition.culture_medium.ID_reference1,
+# q$culture_growth_condition.culture_medium.ID_reference2,
+# q$culture_growth_condition.culture_temp.ID_reference,
+# q$culture_growth_condition.culture_temp.ID_reference1,
+# q$culture_growth_condition.culture_temp.ID_reference2,
+# q$environment_sampling_isolation_source.origin.ID_reference,
+# q$molecular_biology.GC_content.ID_reference,
+# q$molecular_biology.sequence.ID_reference,
+# q$references.ID_reference1.NA,
+# q$references.ID_reference2.NA,
+# q$references.ID_reference3.NA,
+# q$references.ID_reference4.NA,
+# q$strain_availability.strain_history.ID_reference,
+# q$strain_availability.straininfo_link.straininfo_strainnumber,
+# q$strain_availability.straininfo_link.straininfo_strainnumber1,
+# q$strain_availability.straininfo_link.straininfo_strainnumber2,
+# q$strain_availability.strains.ID_reference,
+# q$taxonomy_name.strains.ID_reference)
+# 
+# cor(num_vars)
+
+```
+
+###6. Data visualization: summary “state of knowledge” on bacteria causing disease in mammals or humans
+
+###7. Use traits to predict transmissibility and human disease outcomes
+

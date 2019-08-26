@@ -31,15 +31,15 @@ inds_df1_original_missing_in_df2 = which(!(df1$bacteria_original %in% df2$bacter
 df1$bacteria_original=as.character(df1$bacteria_original)
 # print(df1$pathogen_original[inds_df1_original_missing_in_df2])
 
-df1 <- df1 %>% 
-  select(c(bacteria_species,
-           order_pathogen,
-           tax_id,
-           bacteria_original
-  ))
-
-
 df1=df1[inds_df1_original_missing_in_df2,]
+
+# df1 <- df1 %>% 
+#   select(c(bacteria_species,
+#            order_pathogen,
+#            tax_id,
+#            bacteria_original
+#   ))
+
 df1$pathogenic = 1
 print(unique(df1$bacteria_original))
 #find inds in  master list matching pathogenic species
@@ -49,5 +49,5 @@ df2$pathogenic = 0
 df2$pathogenic[inds] = 1
 
 df2 <- rbind(df1, df2)
-bacteria_species_out2 = df2
-save(bacteria_species_out2, file = "../DATA/PROCESSED/bacteria_species_out2.Rdata")
+bacteria_species_out3 = df2
+save(bacteria_species_out3, file = "../DATA/PROCESSED/bacteria_species_out3.Rdata")

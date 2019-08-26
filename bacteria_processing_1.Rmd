@@ -25,7 +25,7 @@ source("packages_bacteria1.R")
 ###7. Use traits to predict transmissibility and human disease outcomes
 
 ###2. Match dx to pathogen spp. names
-####Include non-zoonotic pathogenic bacteria
+####Include non-zoonotic pathogenic bacteria from GMPD
 
 ####get zoonotic and non-zoonotic pathogens from GMPD and assign taxonomic ID only for those that are species-level
 select only bacteria using info in G_taxonomy
@@ -41,14 +41,15 @@ source("R_classify_bacteria_observed_GMPD.R")
 ```
 
 
-####label pathogens as zoonotic, human only, or wild only. output: bacteria_pathogenic_mammals. Input: G_classified 
+####label pathogens as zoonotic, human only, or wild only. output: bacteria_pathogenic_mammals. Input: G_classified, df_all.Rdata
 ```{r R_human_zoonotic_non_zoonotic}
 source("R_human_zoonotic_non_zoonotic1.R")
 ```
 
-####check that all pathogenic bacteria are present in list of all bacteria. Output:  bacteria_species_out2.Rdata
+####check that all pathogenic bacteria are present in list of all bacteria. Output:  bacteria_species_out2.Rdata (put this on dropbox)
 ```{r}
 source("R_graph_bacteria_order_pathogen_status2.R")
 ```
+
 
 

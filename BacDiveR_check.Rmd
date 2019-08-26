@@ -67,6 +67,8 @@ D <- D[,c("bacdive_id",
 D_uni=distinct(D)#make sure rows are unique
 dim(D_uni)
 #remove NA values
+#look at NA values
+D_na = D_uni[is.na(D_uni$value),]
 D_uni = D_uni[!is.na(D_uni$value),]
 dim(D_uni)
 D_uni = subset(D_uni, field != "ID_reference")
@@ -81,8 +83,17 @@ Spread_2 = spread(D_uni, key = field, value = value)
 write.csv(Spread_2,file = "bacdive_1_species_wide.csv")
 #this also works
 library(data.table)
+D_back = D
+D =D_back
+# D$value[is.na(D$value)] <- -9999#this gets duplicate error, as
+D_uni=distinct(D)#make sure rows are unique
+D_uni = subset(D_uni, field != "ID_reference")
+D_uni = subset(D_uni, field != "ID_reference1")
+D_uni = subset(D_uni, field != "ID_reference2")
+
 # D_cast = dcast(setDT(D), bacdive_id ~ field, value.var = "value")
 D_cast = dcast(setDT(D_uni), bacdive_id ~ field, value.var = "value")
+write.csv(D_cast,file = "bacdive_1_species_wide_dcast.csv")
 
 ```
 
