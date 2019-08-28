@@ -339,16 +339,19 @@ load("q.Rdata")
 bacteria_traits_fields_subset = q
 write.csv(bacteria_traits_fields_subset, file = "bacteria_traits_fields_subset.csv", 
           row.names = FALSE)
+
 ```
 
 ###one hot encode
 ```{r hot_one}
-load("q.Rdata")
-names(q)
-dmy <- dummyVars(" ~ .", data = q,fullRank = T, sep=".")
-df_transformed <- data.frame(predict(dmy, newdata = q))
 
-write.csv(df_transformed, file = "onehotdata.csv", row.names = F)
+# load("q.Rdata")
+# names(q)
+# dmy <- dummyVars(" ~ .", data = q,fullRank = T, sep=".")
+# df_transformed <- data.frame(predict(dmy, newdata = q))
+# 
+# write.csv(df_transformed, file = "onehotdata.csv", row.names = F)
+
 ```
 
 ###visualize features
@@ -517,6 +520,501 @@ ggsave(filename = "length_to_width.jpeg", plot = plot)
 
 
 ```
+
+##find coverage by phylum for interesting fields
+```{r}
+load("../DATA/PROCESSED/D.Rdata")
+phylum_all = subset(D, field == "phylum")
+P_all = data.frame(table(phylum_all$value))
+names(P_all)=c("phylum", "count_total")
+path_hum = subset(D, field == "pathogenicity_human")
+
+#get the species for which we have pathogenicity info
+path_spp = path_hum$species
+
+path_hum_spp = subset(D, species %in% path_spp)
+
+phylum = subset(path_hum_spp, field == "phylum")
+P_path_hum = data.frame(table(phylum$value))
+names(P_path_hum)=c("phylum", "count_pathogenicity_human")
+ 
+P_comb = merge(P_all, P_path_hum, by = "phylum") 
+
+P_comb$fraction_pathogenic = P_comb$count_pathogenicity_human/P_comb$count_total
+
+plot <- ggplot(data = P_comb, aes(x = phylum, y = fraction_pathogenic))+
+  geom_bar(stat = "identity")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+plot
+ggsave(plot=plot, filename = "fraction_pathogenic.jpeg")
+path_anim = subset(D, field == "pathogenicity_animal")
+
+#get the species for which we have pathogenicity info
+path_spp_anim = path_anim$species
+
+path_anim_spp = subset(D, species %in% path_spp_anim)
+
+phylum_anim = subset(path_anim_spp, field == "phylum")
+table(phylum_anim$value)
+
+risk = subset(D, subsection == "risk_assessment")
+risk_check = subset(risk, field == "pathogenicity_human1")
+
+origin = subset(D, subsection == "origin")
+unique(origin$field)
+
+origin_human_abscess = subset(origin, value == "human abscess")
+origin_human_abscess$field
+origin_human_abscess$value
+
+sample_type = subset(origin, field == "sample_type")
+str_detect(sample_type$value, "human")
+# count=as.data.frame(table(D$new_field))#combination of subsection and field
+# var1=count$Var1
+# freq=count$Freq
+# var<-list()
+# freqs<-list()
+# for (i in 1:length(freq)) {
+#      if (freq[i]>=threshold*id_len) {#this will get fields greater than 1%
+#          var[[i]]=var1[i]
+#          freqs[[i]]=freq[i]
+#      }
+# }
+# 
+# df=do.call(rbind, Map(data.frame, Feature_name=var, Frequency=freqs))
+# 
+# df$Fraction = df$Frequency/id_len
+# ###get those seen at least 20% of time
+# df20 = subset(df, Fraction >= 0.2)
+# write.csv(df20, file ="variables_20_percent_coverage.csv")
+# 
+# ###get those seen at least 10% of time
+# df10 = subset(df, Fraction >= 0.1)
+# write.csv(df10, file ="variables_10_percent_coverage.csv")
+# 
+# ###get those seen at least 5% of time
+# df05 = subset(df, Fraction >= 0.05)
+# write.csv(df05, file ="variables_5_percent_coverage.csv")
+# 
+# ###get those seen at least 1% of time
+# df01 = subset(df, Fraction >= 0.01)
+# save(df01, file = "../DATA/PROCESSED/df01.Rdata")
+
+
+```
+
+
+###get data for well-covered fields for one phylum
+```{r}
+load("../DATA/PROCESSED/Data from Backdive-2.RData")
+threshold = 0.01
+D = merge
+D = unique(D)
+#rm(merge)
+#remove NA values
+inds.na = which(!is.na(D$value))
+D = D[inds.na,]
+id_len=length(unique(D$bacdive_id))
+
+D_phylum = subset(D, field == "phylum")
+D_sub = subset(D_phylum, value == "Firmicutes")
+
+bacdive_tmp = D_sub$bacdive_id
+
+D_sub_all = subset(D, bacdive_id %in% bacdive_tmp)#get all in this phylum based on bacdive_ids
+
+D = D_sub_all
+D$new_field = paste(D$section, D$subsection, D$field)
+save(D, file = "../DATA/PROCESSED/D_Firmicutes.Rdata")
+count=as.data.frame(table(D$new_field))#combination of subsection and field
+var1=count$Var1
+freq=count$Freq
+var<-list()
+freqs<-list()
+for (i in 1:length(freq)) {
+     if (freq[i]>=threshold*id_len) {#this will get fields greater than 1%
+         var[[i]]=var1[i]
+         freqs[[i]]=freq[i]
+     }
+}
+
+df=do.call(rbind, Map(data.frame, Feature_name=var, Frequency=freqs))
+
+df$Fraction = df$Frequency/id_len
+
+###get those seen at least 1% of time
+df01 = subset(df, Fraction >= 0.01)
+save(df01, file = "../DATA/PROCESSED/df01_Firmicutes.Rdata")
+
+merge01 = subset(D, new_field %in% df01$Feature_name)
+save(merge01, file = "../DATA/PROCESSED/merge01_Firmicutes.Rdata")
+
+##this part is data_processing.R @
+df <- merge01
+
+df <- unique(df)
+
+df$feature_name <- paste(df$section, df$subsection, df$field)
+
+a <- df[is.element(df$feature_name, df01$Feature_name),]#df01 for 1% threshold
+
+q <- dcast(a, bacdive_id~feature_name)
+q <- q[order(q$bacdive_id),]
+
+write.csv(q, file = "df_Firmicutes.csv", row.names = F)
+temp = read.csv("df_Firmicutes.csv")
+dim(temp)
+# remove columns with near zero variance Global
+# nzv <- nearZeroVar(q,saveMetrics=TRUE,freqCut = 95/5)
+# nzv <- row.names(nzv[which(nzv$nzv==TRUE),])
+# dropnzv<-names(q[ , which(names(q) %in% nzv)])
+# q <- q[ , -which(names(q) %in% nzv)]
+# write.csv(q, file = "dropnzvdata_Firmicutes.csv", row.names = F)
+# 
+# #######
+# q <- read.csv(file = "dropnzvdata_Firmicutes.csv")
+dim(q)
+str(q)
+
+str(q, list.len=ncol(q))
+
+q$`molecular_biology GC_content GC_content`=as.character(q$`molecular_biology GC_content GC_content`)
+# q$`culture_growth_condition culture_temp temp1`=as.character(q$`culture_growth_condition culture_temp temp1`)
+# q$culture_growth_condition culture_temp temp2=as character(q$culture_growth_condition culture_temp temp2)
+# q$culture_growth_condition culture_temp temp = as character(q$culture_growth_condition culture_temp temp)
+#split = strsplit(as character(q$molecular_biology GC_content GC_content[905]), "-")
+rm = c("culture_growth_condition culture_medium media_link",
+       "culture_growth_condition culture_medium media_link1",
+       "culture_growth_condition culture_medium medium_name",
+       "culture_growth_condition culture_medium medium_name1",
+       "culture_growth_condition culture_medium medium_name2",
+       "culture_growth_condition culture_temp temp2","culture_growth_condition culture_temp test_type2",
+       "environment_sampling_isolation_source origin geo_loc_name",
+      # "environment_sampling_isolation_source origin sample_type",
+       "molecular_biology sequence DB_sequence",
+       "molecular_biology sequence DB_sequence2",
+       "molecular_biology sequence seq_acc_num",
+       "molecular_biology sequence seq_acc_num1",
+       "molecular_biology sequence seq_acc_num2",
+       "references reference1 NA",
+       "references reference2 NA",
+       "references reference3 NA",
+       "references reference4 NA",
+       "strain_availability strain_history history",
+       "strain_availability straininfo_link URL",
+       "strain_availability straininfo_link URL1",
+       "strain_availability straininfo_link URL2",
+       "strain_availability strains strain_number",
+       "taxonomy_name strains designation",
+       "taxonomy_name strains full_scientific_name",
+       "taxonomy_name strains genus",
+       "taxonomy_name strains species",
+       "taxonomy_name strains species_epithet",
+       "taxonomy_name strains_synonyms_PNU pnu_synonym",
+       "taxonomy_name strains_tax_PNU status_gen",
+       "taxonomy_name strains_tax_PNU status_spec",
+       "environment_sampling_isolation_source origin country",
+       # "taxonomy_name strains_tax_PNU phylum",
+       "molecular_biology sequence DB_sequence1",
+       "taxonomy_name strains class",
+       "taxonomy_name strains family",
+       #       "taxonomy_name strains ordo",
+       "taxonomy_name strains phylum",
+       "taxonomy_name strains_tax_PNU class",
+       "taxonomy_name strains_tax_PNU family",
+       "taxonomy_name strains_tax_PNU genus",
+       "taxonomy_name strains_tax_PNU full_scientific_name",
+       #"taxonomy_name strains_tax_PNU species",#use species as identifier
+       "taxonomy_name strains_tax_PNU species_epithet")#30
+keep = setdiff(names(q), rm)
+q = q[,keep]
+
+q$`molecular_biology GC_content GC_content`= as.character(q$`molecular_biology GC_content GC_content`)
+
+#fix GC content
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$`molecular_biology GC_content GC_content`[a])){
+    if (grepl("±", q$`molecular_biology GC_content GC_content`[a])==TRUE){
+      split = strsplit(q$`molecular_biology GC_content GC_content`[a], "±")
+      q$`molecular_biology GC_content GC_content`[a] =as.numeric(split[[1]][1])
+    }
+    length_char = str_length(q$`molecular_biology GC_content GC_content`[a])
+    if (length_char > 4){
+      split = strsplit(q$`molecular_biology GC_content GC_content`[a], "-")
+      q$`molecular_biology GC_content GC_content`[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+    
+  }
+}
+
+#fix morphology_physiology cell_morphology cell_len
+q$`morphology_physiology cell_morphology cell_len`=as.character(q$`morphology_physiology cell_morphology cell_len`)
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$`morphology_physiology cell_morphology cell_len`[a])){
+    q$`morphology_physiology cell_morphology cell_len`[a]=str_replace(q$`morphology_physiology cell_morphology cell_len`[a],
+                                                                    pattern = ">",
+                                                                    replacement = "")
+    q$`morphology_physiology cell_morphology cell_len`[a]=str_replace(q$`morphology_physiology cell_morphology cell_len`[a],
+                                                                    pattern = "<",
+                                                                    replacement = "")
+    grep_test = grepl("-", q$`morphology_physiology cell_morphology cell_len`[a])
+    if (grep_test == TRUE){
+      split = strsplit(q$`morphology_physiology cell_morphology cell_len`[a], "-")
+      q$`morphology_physiology cell_morphology cell_len`[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+  }
+}
+q$`morphology_physiology cell_morphology cell_len`=as.numeric(q$`morphology_physiology cell_morphology cell_len`)
+
+
+#fix morphology_physiology cell_morphology cell_width
+q$`morphology_physiology cell_morphology cell_width`=as.character(q$`morphology_physiology cell_morphology cell_width`)
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$`morphology_physiology cell_morphology cell_width`[a])){
+    q$`morphology_physiology cell_morphology cell_width`[a]=str_replace(q$`morphology_physiology cell_morphology cell_width`[a],
+                                                                      pattern = ">",
+                                                                      replacement = "")
+    q$`morphology_physiology cell_morphology cell_width`[a]=str_replace(q$`morphology_physiology cell_morphology cell_width`[a],
+                                                                      pattern = "<",
+                                                                      replacement = "")
+    grep_test = grepl("-", q$`morphology_physiology cell_morphology cell_width`[a])
+    if (grep_test == TRUE){
+      split = strsplit(q$`morphology_physiology cell_morphology cell_width`[a], "-")
+      q$`morphology_physiology cell_morphology cell_width`[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+  }
+}
+q$`morphology_physiology cell_morphology cell_width`=as.numeric(q$`morphology_physiology cell_morphology cell_width`)
+
+#unique(q$morphology_physiology colony_morphology incubation_period)
+q$`morphology_physiology colony_morphology incubation_period`=as.character(q$`morphology_physiology colony_morphology incubation_period`)
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$`morphology_physiology colony_morphology incubation_period`[a])){
+    q$`morphology_physiology colony_morphology incubation_period`[a]=str_replace(q$`morphology_physiology colony_morphology incubation_period`[a],
+                                                                               pattern = ">",
+                                                                               replacement = "")
+    q$`morphology_physiology colony_morphology incubation_period`[a]=str_replace(q$`morphology_physiology colony_morphology incubation_period`[a],
+                                                                               pattern = "<",
+                                                                               replacement = "")
+    
+    q$`morphology_physiology colony_morphology incubation_period`[a]=str_replace(q$`morphology_physiology colony_morphology incubation_period`[a],
+                                                                               pattern = "days",
+                                                                               replacement = "")
+    
+    grep_test = grepl("-", q$`morphology_physiology colony_morphology incubation_period`[a])
+    if (grep_test == TRUE){
+      split = strsplit(q$`morphology_physiology colony_morphology incubation_period`[a], "-")
+      q$`morphology_physiology colony_morphology incubation_period`[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+  }
+}
+q$`morphology_physiology colony_morphology incubation_period`=as.numeric(q$`morphology_physiology colony_morphology incubation_period`)
+
+
+q$`molecular_biology GC_content GC_content`= as.numeric(q$`molecular_biology GC_content GC_content`)
+
+keep = c("application_interaction risk_assessment biosafety_level",
+         "molecular_biology GC_content GC_content",
+         "taxonomy_name strains_tax_PNU species",
+         "culture_growth_condition culture_temp temperature_range",
+         "environment_sampling_isolation_source origin continent",
+         # "taxonomy_name strains_tax_PNU phylum",
+         "environment_sampling_isolation_source origin latitude",
+         "environment_sampling_isolation_source origin longitude",
+         "morphology_physiology spore_formation type",
+         "morphology_physiology oxygen_tolerance oxygen_tol",
+         #"morphology_physiology met_test metabolite_test",#don't know what this means
+         #"morphology_physiology met_production metabolite_prod",#don't know what this means
+         #"morphology_physiology met_antibiotica metabolite_antib",#don't know what this means
+         #"morphology_physiology halophily salt_concentration",#FIXED to make numeric  Includes >, <  This is relative to multiple possible measures -- growth, optimum  discard  
+         #"morphology_physiology met_antibiotica ab_resistance_conc",#don't know what this means  Seems to refer to concentration of antibiotic in test  Exclude  
+         "morphology_physiology colony_morphology colony_len",#FIXED to make numeric  Includes >, <
+         "morphology_physiology colony_morphology hemolysis_type",#don't know what this means
+         "morphology_physiology cell_morphology motility",#factor
+         "morphology_physiology cell_morphology gram_stain",#factor
+         "morphology_physiology cell_morphology flagellum_arrangement",#factor
+         "morphology_physiology cell_morphology cell_len",#FIXED to make numeric  assumning all in same units
+         "morphology_physiology cell_morphology cell_shape",#factor
+         "morphology_physiology cell_morphology cell_width",#need to FIX to make numeric 
+         "culture_growth_condition culture_temp temp",#need to FIX to make numeric; refers to growth vs  optimum; exclude
+         "culture_growth_condition culture_pH pH",
+         "morphology_physiology spore_formation ability",
+         "taxonomy_name strains ordo",
+         "application_interaction risk_assessment pathogenicity_animal",
+         "application_interaction risk_assessment pathogenicity_human",
+         "bacdive_id",
+         "environment_sampling_isolation_source origin sample_type")
+keep = intersect(names(q), keep)
+q = q[,keep]
+
+save(q, file = "q_Firmicutes Rdata")
+load("q_Firmicutes Rdata")
+bacteria_traits_fields_subset = q
+write.csv(bacteria_traits_fields_subset, file = "bacteria_traits_fields_subset_Firmicutes.csv", 
+          row.names = FALSE)
+#fix animal pathogenic
+inds = which(!is.na(q$`application_interaction risk_assessment pathogenicity_animal`))
+q$`application_interaction risk_assessment pathogenicity_animal`[inds]="1"
+
+inds.na = which(is.na(q$`application_interaction risk_assessment pathogenicity_animal`))
+q$`application_interaction risk_assessment pathogenicity_animal`[inds.na]="0"
+q$`application_interaction risk_assessment pathogenicity_animal`=as.numeric(q$`application_interaction risk_assessment pathogenicity_animal`)
+
+# q$`application_interaction risk_assessment pathogenicity_animal`[is.na(q$`application_interaction risk_assessment pathogenicity_animal`)]=0
+# q$`application_interaction risk_assessment pathogenicity_animal`[!is.na(q$`application_interaction risk_assessment pathogenicity_animal`)]=1
+
+#fix human pathogenic
+inds = which(!is.na(q$`application_interaction risk_assessment pathogenicity_human`))
+q$`application_interaction risk_assessment pathogenicity_human`[inds]="1"
+
+inds.na = which(is.na(q$`application_interaction risk_assessment pathogenicity_human`))
+q$`application_interaction risk_assessment pathogenicity_human`[inds.na]="0"
+q$`application_interaction risk_assessment pathogenicity_human`=as.numeric(q$`application_interaction risk_assessment pathogenicity_human`)
+
+# q$`application_interaction risk_assessment pathogenicity_human`[is.na(q$`application_interaction risk_assessment pathogenicity_human`)]=0
+# q$`application_interaction risk_assessment pathogenicity_human`[!is.na(q$`application_interaction risk_assessment pathogenicity_human`)]=1
+summary(q$`application_interaction risk_assessment pathogenicity_human`)
+q$human_origin = grepl("human", q$`environment_sampling_isolation_source origin sample_type`)
+q$human_origin[q$human_origin==FALSE]=0
+q$human_origin[q$human_origin==TRUE]=1
+rm = c("bacdive_id",
+       "taxonomy_name strains_tax_PNU species",
+       "environment_sampling_isolation_source origin sample_type")
+keep = setdiff(names(q), rm)
+q = q[,keep]
+
+q$`application_interaction risk_assessment biosafety_level`=factor(q$`application_interaction risk_assessment biosafety_level`)
+q$`application_interaction risk_assessment pathogenicity_animal`=as.numeric(q$`application_interaction risk_assessment pathogenicity_animal`)
+q$`culture_growth_condition culture_temp temp`=as.numeric(q$`culture_growth_condition culture_temp temp`)
+q$`environment_sampling_isolation_source origin continent`=factor(q$`environment_sampling_isolation_source origin continent`)
+q$`morphology_physiology cell_morphology cell_shape`=factor(q$`morphology_physiology cell_morphology cell_shape`)
+q$`morphology_physiology cell_morphology gram_stain`=factor(q$`morphology_physiology cell_morphology gram_stain`)
+q$`morphology_physiology cell_morphology motility`=factor(q$`morphology_physiology cell_morphology motility`)
+q$`morphology_physiology oxygen_tolerance oxygen_tol`=factor(q$`morphology_physiology oxygen_tolerance oxygen_tol`)
+q$`morphology_physiology spore_formation ability`=factor(q$`morphology_physiology spore_formation ability`)
+q$`taxonomy_name strains ordo`=factor(q$`taxonomy_name strains ordo`)
+
+dmy <- dummyVars(" ~ .", data = q,fullRank = T, sep=".")
+
+df_transformed <- data.frame(predict(dmy, newdata = q))
+save(df_transformed, file = "df_transformed.Rdata")
+write.csv(df_transformed, file = "onehotdata_Firmicutes.csv", row.names = F)
+
+y_col = 3
+x_col = c(1:2, 4:51)
+
+model<-as.formula(paste(colnames(df_transformed)[y_col], "~",
+                        paste(colnames(df_transformed)[x_col],collapse = "+"),
+                        sep = ""))
+
+```
+
+##get train and test
+```{r}
+load("df_transformed.Rdata")
+df = df_transformed
+
+DP =createDataPartition(y = df$X.application_interaction.risk_assessment.pathogenicity_human., 
+                        p = 0.8,
+                        list = FALSE)
+Train = df[DP,]
+Test = df[-DP,]
+
+save(Train, file = "Train.Rdata")
+save(Test, file = "Test.Rdata")
+
+```
+
+##fit gbm
+```{r gbm}
+load("Train.Rdata")
+load("Test.Rdata")
+attach(Train)
+#Start the clock
+ptm<-proc.time()
+
+n.trees = 100000
+shrinkage = 0.001#final version should be 0.001
+cv.folds = 10#final version should be 10
+gbmtest<- gbm(model,
+              data=Train,
+              distribution="bernoulli",
+              n.trees=n.trees,
+              shrinkage=shrinkage,
+              interaction.depth=3,
+              bag.fraction=0.50,
+              train.fraction=1,
+              n.minobsinnode=5,
+              cv.folds=cv.folds,
+              keep.data=TRUE,
+              verbose=TRUE,
+              n.cores=NULL)
+
+save(gbmtest, file = "gbmtest.Rdata")
+#check performance using 5-fold cross-validation
+best.iter <- gbm.perf(gbmtest,method="cv",plot.it=FALSE) #this gives you the optimal number of trees based on cv performance, other methods will over or under predict
+print(best.iter)
+
+gbm_error = data.frame(train.error = gbmtest$train.error,
+                       trees = seq(1,n.trees))
+plot <- ggplot(gbm_error, aes(x = trees, y = train.error))+
+  geom_line()
+plot
+ggsave(filename = "deviance_human_pathogenic_Firmicutes.jpg",
+       plot = plot)
+#Stop the clock
+(proc.time()-ptm)/60
+
+
+# output predictions on the TRAINING SET
+output<-predict(gbmtest, 
+                newdata=Train, 
+                n.trees=best.iter, 
+                type="response") 
+
+#need to figure out how to interpret this, or change it to be interpretable
+output<-cbind(output,Train$X.application_interaction.risk_assessment.pathogenicity_human.)
+colnames(output)<-c("output","data")
+rownames(output)<-rownames(Train)
+output<-output[order(-output[,1]),]
+
+# # AUC for Bernoulli distributed responses
+par(mar = c(1,1,1,1))
+auc=colAUC(output[,1],output[,2],
+           plotROC = TRUE)
+
+print(auc)
+pred<-prediction(output[,1],output[,2])
+perf<-performance(pred,"tpr","fpr")
+
+par(mar = c(1,1,1,1))
+plot(perf,colorize=TRUE,main="ROC full model")
+abline(a=0, b= 1)
+```
+
+###plot relative influence
+```{r}
+#format relative influence for figure
+load("gbmtest.Rdata")
+x = summary(gbmtest)
+# 
+x.df= data.frame(variable = x$var,
+                 relative.influence = x$rel.inf)
+
+x.df = subset(x.df, relative.influence>=1)#take only interesting variables
+
+x.df$variable = factor(x.df$variable, levels = x.df$variable[order(x.df$relative.influence)])
+save(x.df, file = "x.df.Rdata")
+ggplot(data = x.df, aes(x = variable, y =relative.influence))+
+  ylab("relative influence (%)")+
+  xlab("variable")+
+  geom_bar(stat="identity")+
+  coord_flip()
+# 
+ggsave("Figure.relative.influence.jpg")
+
+```
+
 
 
 ###5. Feature construction with bacterial traits
