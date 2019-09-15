@@ -18,22 +18,7 @@ source("packages_bacteria1.R")
 #https://github.com/guiastrennec/ggplus
 ```
 
-
-###1. Get bacteria-caused dx in GIDEON   
-###2. Match dx to pathogen spp. names
-###3. Match spp. names (from GIDEON zdx and GMPD) to traits (in GMPD & other)
-###4. Compile master list of bacteria spp & traits
-
-
-####Check what fields are in bacteria_species_out2.Rdata
-bacteria_species_out2 includes pathogenic and non-pathogenic bacteria
-```{r}
-#commenting this out for now because it doesn't do anything new
-#source("R_graph_bacteria_order_pathogen_status3.R")
-```
-
-###read in BacDive data accessed by Wanjia Song
-
+###read in BacDive data
 ###find out fields with at least threshold % coverage
 ```{r get_proportion}
 load("../DATA/PROCESSED/Data from Backdive-2.RData")
@@ -72,17 +57,6 @@ for (i in 1:length(freq)) {
 df=do.call(rbind, Map(data.frame, Feature_name=var, Frequency=freqs))
 
 df$Fraction = df$Frequency/id_len
-###get those seen at least 20% of time
-df20 = subset(df, Fraction >= 0.2)
-write.csv(df20, file ="variables_20_percent_coverage.csv")
-
-###get those seen at least 10% of time
-df10 = subset(df, Fraction >= 0.1)
-write.csv(df10, file ="variables_10_percent_coverage.csv")
-
-###get those seen at least 5% of time
-df05 = subset(df, Fraction >= 0.05)
-write.csv(df05, file ="variables_5_percent_coverage.csv")
 
 ###get those seen at least 1% of time
 df01 = subset(df, Fraction >= 0.01)
@@ -96,18 +70,12 @@ load("../DATA/PROCESSED/D.RData")
 merge01 = subset(D, new_field %in% df01$Feature_name)
 save(merge01, file = "../DATA/PROCESSED/merge01.Rdata")
 
-merge20 = subset(D, new_field %in% df20$Feature_name)
-save(merge20, file = "../DATA/PROCESSED/merge20.Rdata")
-
-merge10 = subset(D, new_field %in% df10$Feature_name)
-save(merge10, file = "../DATA/PROCESSED/merge10.Rdata")
-
-
 ```
 
 ```{r data_processing}
+##this part is from data_processing.R 
+load("../DATA/PROCESSED/merge01.Rdata")
 
-##this part is data_processing.R @
 df <- merge01
 
 df <- unique(df)
@@ -116,9 +84,12 @@ df$feature_name <- paste(df$section, df$subsection, df$field)
 
 a <- df[is.element(df$feature_name, df01$Feature_name),]#df01 for 1% threshold
 
-q <- dcast(a, bacdive_id~feature_name)
+q_all <- dcast(a, bacdive_id~feature_name)
+dim(q_all)
+q = q_all
 q <- q[order(q$bacdive_id),]
 
+dim(q)
 ##test with merge10
 # df10 <- merge10
 # 
@@ -134,20 +105,27 @@ q <- q[order(q$bacdive_id),]
 
 write.csv(q, file = "df.csv", row.names = F)
 temp = read.csv("df.csv")
+col_names_list = names(temp)
+write.csv(col_names_list, file = "bacteria_fields.csv",
+          row.names=FALSE)
+
 dim(temp)
-# remove columns with near zero variance Global
-nzv <- nearZeroVar(q,saveMetrics=TRUE,freqCut = 95/5)
-nzv <- row.names(nzv[which(nzv$nzv==TRUE),])
-dropnzv<-names(q[ , which(names(q) %in% nzv)])
-q <- q[ , -which(names(q) %in% nzv)]
-write.csv(q, file = "dropnzvdata.csv", row.names = F)
+# # remove columns with near zero variance Global
+# nzv <- nearZeroVar(q,saveMetrics=TRUE,freqCut = 95/5)
+# nzv <- row.names(nzv[which(nzv$nzv==TRUE),])
+# dropnzv<-names(q[ , which(names(q) %in% nzv)])
+# q <- q[ , -which(names(q) %in% nzv)]
+# write.csv(q, file = "dropnzvdata.csv", row.names = F)
 
 ```
+
 
 ```{r rm_fix_fields}
 ##this part corresponds to Zach's one_hot_encoding.R
 #one-hot encode categorical variables
-q <- read.csv(file = "dropnzvdata.csv")
+q_all <- read.csv(file = "df.csv")
+
+q = q_all
 dim(q)
 str(q)
 
@@ -157,10 +135,9 @@ q$molecular_biology.GC_content.GC_content=as.character(q$molecular_biology.GC_co
 q$culture_growth_condition.culture_temp.temp1=as.character(q$culture_growth_condition.culture_temp.temp1)
 q$culture_growth_condition.culture_temp.temp2=as.character(q$culture_growth_condition.culture_temp.temp2)
 q$culture_growth_condition.culture_temp.temp = as.character(q$culture_growth_condition.culture_temp.temp)
-#split = strsplit(as.character(q$molecular_biology.GC_content.GC_content[905]), "-")
-rm = c("culture_growth_condition.culture_medium.media_link",
-       "culture_growth_condition.culture_medium.media_link1",
-       "culture_growth_condition.culture_medium.medium_name",
+
+#remove some fields we checked out
+rm = c("culture_growth_condition.culture_medium.medium_name",
        "culture_growth_condition.culture_medium.medium_name1",
        "culture_growth_condition.culture_medium.medium_name2",
        "culture_growth_condition.culture_temp.temp2","culture_growth_condition.culture_temp.test_type2",
@@ -222,25 +199,6 @@ for (a in 1:dim(q)[1]){
       
   }
 }
-
-#fix morphology_physiology.halophily.salt_concentration
-q$morphology_physiology.halophily.salt_concentration=as.character(q$morphology_physiology.halophily.salt_concentration)
-for (a in 1:dim(q)[1]){
-  if(!is.na(q$morphology_physiology.halophily.salt_concentration[a])){
-    q$morphology_physiology.halophily.salt_concentration[a]=str_replace(q$morphology_physiology.halophily.salt_concentration[a],
-                                                                        pattern = ">",
-                                                                        replacement = "")
-    q$morphology_physiology.halophily.salt_concentration[a]=str_replace(q$morphology_physiology.halophily.salt_concentration[a],
-                                                                        pattern = "<",
-                                                                        replacement = "")
-    grep_test = grepl("-", q$morphology_physiology.halophily.salt_concentration[a])
-    if (grep_test == TRUE){
-        split = strsplit(q$morphology_physiology.halophily.salt_concentration[a], "-")
-        q$morphology_physiology.halophily.salt_concentration[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
-    }
-  }
-}
-q$morphology_physiology.halophily.salt_concentration=as.numeric(q$morphology_physiology.halophily.salt_concentration)
 
 
 #fix morphology_physiology.colony_morphology.colony_len
@@ -304,7 +262,7 @@ q$morphology_physiology.cell_morphology.cell_width=as.numeric(q$morphology_physi
 
 q$molecular_biology.GC_content.GC_content= as.numeric(q$molecular_biology.GC_content.GC_content)
 
-keep = c("application_interaction.risk_assessment.biosafety_level",
+keep = c(#"application_interaction.risk_assessment.biosafety_level",
          "molecular_biology.GC_content.GC_content",
          "taxonomy_name.strains_tax_PNU.species",
          "culture_growth_condition.culture_temp.temperature_range",
@@ -328,8 +286,8 @@ keep = c("application_interaction.risk_assessment.biosafety_level",
           "morphology_physiology.cell_morphology.cell_len",#FIXED to make numeric. assumning all in same units
          "morphology_physiology.cell_morphology.cell_shape",#factor
          "morphology_physiology.cell_morphology.cell_width",#need to FIX to make numeric 
-         "culture_growth_condition.culture_temp.temp",#need to FIX to make numeric; refers to growth vs. optimum; exclude
-         "culture_growth_condition.culture_pH.pH",
+         # "culture_growth_condition.culture_temp.temp",#need to FIX to make numeric; refers to growth vs. optimum; exclude
+         # "culture_growth_condition.culture_pH.pH",
          "bacdive_id")#need to FIX to make numeric; refers to growth vs. optimum; exclude
 
 q = q[,keep]
@@ -359,11 +317,11 @@ write.csv(bacteria_traits_fields_subset, file = "bacteria_traits_fields_subset.c
 load("q.Rdata")
 
 #biosafety
-plot <- ggplot(data = q, aes(x = application_interaction.risk_assessment.biosafety_level))+
-  geom_histogram(stat = "count")
-plot
-
-ggsave(filename = "biosafety.jpeg", plot = plot)
+# plot <- ggplot(data = q, aes(x = application_interaction.risk_assessment.biosafety_level))+
+#   geom_histogram(stat = "count")
+# plot
+# 
+# ggsave(filename = "biosafety.jpeg", plot = plot)
 
 #temperature range
 plot <- ggplot(data = q, aes(x = culture_growth_condition.culture_temp.temperature_range))+
@@ -409,12 +367,12 @@ ggsave(filename = "formation-type.jpeg", plot = plot)
 length(which(!is.na(q$morphology_physiology.spore_formation.type)))/dim(q)[1]#1%
 
 #morphology_physiology.oxygen_tolerance.oxygen_tol
-plot <- ggplot(data = q, aes(x = morphology_physiology.oxygen_tolerance.oxygen_tol))+
-  geom_histogram(stat = "count")+
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
-  scale_y_log10()
-
-plot
+# plot <- ggplot(data = q, aes(x = morphology_physiology.oxygen_tolerance.oxygen_tol))+
+#   geom_histogram(stat = "count")+
+#   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+#   scale_y_log10()
+# 
+# plot
 
 ggsave(filename = "morphology_physiology.oxygen_tolerance.oxygen_tol.jpeg", plot = plot)
 
@@ -439,12 +397,12 @@ plot
 ggsave(filename = "morphology_physiology.cell_morphology.gram_stain.jpeg", plot = plot)
 
 #morphology_physiology.cell_morphology.flagellum_arrangement
-plot <- ggplot(data = q, aes(x = morphology_physiology.cell_morphology.flagellum_arrangement))+
-  geom_histogram(stat = "count")+
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
-  scale_y_log10()
-
-plot
+# plot <- ggplot(data = q, aes(x = morphology_physiology.cell_morphology.flagellum_arrangement))+
+#   geom_histogram(stat = "count")+
+#   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+#   scale_y_log10()
+# 
+# plot
 
 ggsave(filename = "morphology_physiology.cell_morphology.flagellum_arrangement.jpeg", plot = plot)
 
@@ -459,12 +417,12 @@ plot
 ggsave(filename = "morphology_physiology.cell_morphology.cell_shape.jpeg", plot = plot)
 
 #morphology_physiology.colony_morphology.hemolysis_type
-plot <- ggplot(data = q, aes(x = morphology_physiology.colony_morphology.hemolysis_type))+
-  geom_histogram(stat = "count")+
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
-  scale_y_log10()
-
-plot
+# plot <- ggplot(data = q, aes(x = morphology_physiology.colony_morphology.hemolysis_type))+
+#   geom_histogram(stat = "count")+
+#   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+#   scale_y_log10()
+# 
+# plot
 
 ggsave(filename = "morphology_physiology.colony_morphology.hemolysis_type.jpeg", plot = plot)
 
@@ -521,7 +479,7 @@ ggsave(filename = "length_to_width.jpeg", plot = plot)
 
 ```
 
-##find coverage by phylum for interesting fields
+##find coverage by phylum for interesting field -- pathogenicity to humans
 ```{r}
 load("../DATA/PROCESSED/D.Rdata")
 phylum_all = subset(D, field == "phylum")
@@ -569,42 +527,11 @@ origin_human_abscess$value
 
 sample_type = subset(origin, field == "sample_type")
 str_detect(sample_type$value, "human")
-# count=as.data.frame(table(D$new_field))#combination of subsection and field
-# var1=count$Var1
-# freq=count$Freq
-# var<-list()
-# freqs<-list()
-# for (i in 1:length(freq)) {
-#      if (freq[i]>=threshold*id_len) {#this will get fields greater than 1%
-#          var[[i]]=var1[i]
-#          freqs[[i]]=freq[i]
-#      }
-# }
-# 
-# df=do.call(rbind, Map(data.frame, Feature_name=var, Frequency=freqs))
-# 
-# df$Fraction = df$Frequency/id_len
-# ###get those seen at least 20% of time
-# df20 = subset(df, Fraction >= 0.2)
-# write.csv(df20, file ="variables_20_percent_coverage.csv")
-# 
-# ###get those seen at least 10% of time
-# df10 = subset(df, Fraction >= 0.1)
-# write.csv(df10, file ="variables_10_percent_coverage.csv")
-# 
-# ###get those seen at least 5% of time
-# df05 = subset(df, Fraction >= 0.05)
-# write.csv(df05, file ="variables_5_percent_coverage.csv")
-# 
-# ###get those seen at least 1% of time
-# df01 = subset(df, Fraction >= 0.01)
-# save(df01, file = "../DATA/PROCESSED/df01.Rdata")
-
 
 ```
 
 
-###get data for well-covered fields for one phylum
+###get data for well-covered fields for one phylum, Firmicutes
 ```{r}
 load("../DATA/PROCESSED/Data from Backdive-2.RData")
 threshold = 0.01
@@ -664,8 +591,8 @@ q <- q[order(q$bacdive_id),]
 write.csv(q, file = "df_Firmicutes.csv", row.names = F)
 temp = read.csv("df_Firmicutes.csv")
 dim(temp)
-# remove columns with near zero variance Global
-# nzv <- nearZeroVar(q,saveMetrics=TRUE,freqCut = 95/5)
+# remove columns with near zero variance Global. Not doing this because it removes interesting variables like pathogenicity.animal
+# nzv <- nearZeroVar(q,saveMetrics=TRUE,freqCut = 99/1)
 # nzv <- row.names(nzv[which(nzv$nzv==TRUE),])
 # dropnzv<-names(q[ , which(names(q) %in% nzv)])
 # q <- q[ , -which(names(q) %in% nzv)]
@@ -720,7 +647,7 @@ rm = c("culture_growth_condition culture_medium media_link",
        "taxonomy_name strains family",
        #       "taxonomy_name strains ordo",
        "taxonomy_name strains phylum",
-       "taxonomy_name strains_tax_PNU class",
+       # "taxonomy_name strains_tax_PNU class",
        "taxonomy_name strains_tax_PNU family",
        "taxonomy_name strains_tax_PNU genus",
        "taxonomy_name strains_tax_PNU full_scientific_name",
@@ -765,7 +692,8 @@ for (a in 1:dim(q)[1]){
   }
 }
 q$`morphology_physiology cell_morphology cell_len`=as.numeric(q$`morphology_physiology cell_morphology cell_len`)
-
+inds = which(q$`morphology_physiology cell_morphology cell_len_unit` == "mm")
+q$`morphology_physiology cell_morphology cell_len`[inds]=q$`morphology_physiology cell_morphology cell_len`[inds]*1000
 
 #fix morphology_physiology cell_morphology cell_width
 q$`morphology_physiology cell_morphology cell_width`=as.character(q$`morphology_physiology cell_morphology cell_width`)
@@ -785,7 +713,8 @@ for (a in 1:dim(q)[1]){
   }
 }
 q$`morphology_physiology cell_morphology cell_width`=as.numeric(q$`morphology_physiology cell_morphology cell_width`)
-
+inds = which(q$`morphology_physiology cell_morphology cell_width_unit` == "mm")
+q$`morphology_physiology cell_morphology cell_width`[inds] = 1000*q$`morphology_physiology cell_morphology cell_width`[inds]
 #unique(q$morphology_physiology colony_morphology incubation_period)
 q$`morphology_physiology colony_morphology incubation_period`=as.character(q$`morphology_physiology colony_morphology incubation_period`)
 for (a in 1:dim(q)[1]){
@@ -813,7 +742,8 @@ q$`morphology_physiology colony_morphology incubation_period`=as.numeric(q$`morp
 
 q$`molecular_biology GC_content GC_content`= as.numeric(q$`molecular_biology GC_content GC_content`)
 
-keep = c("application_interaction risk_assessment biosafety_level",
+keep = c(
+        #"application_interaction risk_assessment biosafety_level",
          "molecular_biology GC_content GC_content",
          "taxonomy_name strains_tax_PNU species",
          "culture_growth_condition culture_temp temperature_range",
@@ -822,28 +752,30 @@ keep = c("application_interaction risk_assessment biosafety_level",
          "environment_sampling_isolation_source origin latitude",
          "environment_sampling_isolation_source origin longitude",
          "morphology_physiology spore_formation type",
-         "morphology_physiology oxygen_tolerance oxygen_tol",
+         # "morphology_physiology oxygen_tolerance oxygen_tol",#this has multiple entries, tol1, tol2. 
          #"morphology_physiology met_test metabolite_test",#don't know what this means
          #"morphology_physiology met_production metabolite_prod",#don't know what this means
          #"morphology_physiology met_antibiotica metabolite_antib",#don't know what this means
          #"morphology_physiology halophily salt_concentration",#FIXED to make numeric  Includes >, <  This is relative to multiple possible measures -- growth, optimum  discard  
          #"morphology_physiology met_antibiotica ab_resistance_conc",#don't know what this means  Seems to refer to concentration of antibiotic in test  Exclude  
          "morphology_physiology colony_morphology colony_len",#FIXED to make numeric  Includes >, <
-         "morphology_physiology colony_morphology hemolysis_type",#don't know what this means
+         # "morphology_physiology colony_morphology hemolysis_type",#don't know what this means. doesn't seem to exist for Firmicutes
          "morphology_physiology cell_morphology motility",#factor
          "morphology_physiology cell_morphology gram_stain",#factor
-         "morphology_physiology cell_morphology flagellum_arrangement",#factor
+         "morphology_physiology cell_morphology flagellum_arrangement",#factor; does not seem to be present for Firmicutes
          "morphology_physiology cell_morphology cell_len",#FIXED to make numeric  assumning all in same units
          "morphology_physiology cell_morphology cell_shape",#factor
          "morphology_physiology cell_morphology cell_width",#need to FIX to make numeric 
-         "culture_growth_condition culture_temp temp",#need to FIX to make numeric; refers to growth vs  optimum; exclude
-         "culture_growth_condition culture_pH pH",
+         # "culture_growth_condition culture_temp temp",#need to FIX to make numeric; refers to growth vs  optimum; exclude
+         # "culture_growth_condition culture_pH pH",
          "morphology_physiology spore_formation ability",
          "taxonomy_name strains ordo",
          "application_interaction risk_assessment pathogenicity_animal",
          "application_interaction risk_assessment pathogenicity_human",
          "bacdive_id",
-         "environment_sampling_isolation_source origin sample_type")
+         "environment_sampling_isolation_source origin sample_type",
+         "morphology_physiology cell_morphology gram_stain",
+         "taxonomy_name strains_tax_PNU class")
 keep = intersect(names(q), keep)
 q = q[,keep]
 
@@ -883,14 +815,14 @@ rm = c("bacdive_id",
 keep = setdiff(names(q), rm)
 q = q[,keep]
 
-q$`application_interaction risk_assessment biosafety_level`=factor(q$`application_interaction risk_assessment biosafety_level`)
+# q$`application_interaction risk_assessment biosafety_level`=factor(q$`application_interaction risk_assessment biosafety_level`)
 q$`application_interaction risk_assessment pathogenicity_animal`=as.numeric(q$`application_interaction risk_assessment pathogenicity_animal`)
-q$`culture_growth_condition culture_temp temp`=as.numeric(q$`culture_growth_condition culture_temp temp`)
+# q$`culture_growth_condition culture_temp temp`=as.numeric(q$`culture_growth_condition culture_temp temp`)
 q$`environment_sampling_isolation_source origin continent`=factor(q$`environment_sampling_isolation_source origin continent`)
 q$`morphology_physiology cell_morphology cell_shape`=factor(q$`morphology_physiology cell_morphology cell_shape`)
 q$`morphology_physiology cell_morphology gram_stain`=factor(q$`morphology_physiology cell_morphology gram_stain`)
 q$`morphology_physiology cell_morphology motility`=factor(q$`morphology_physiology cell_morphology motility`)
-q$`morphology_physiology oxygen_tolerance oxygen_tol`=factor(q$`morphology_physiology oxygen_tolerance oxygen_tol`)
+# q$`morphology_physiology oxygen_tolerance oxygen_tol`=factor(q$`morphology_physiology oxygen_tolerance oxygen_tol`)
 q$`morphology_physiology spore_formation ability`=factor(q$`morphology_physiology spore_formation ability`)
 q$`taxonomy_name strains ordo`=factor(q$`taxonomy_name strains ordo`)
 
@@ -900,12 +832,19 @@ df_transformed <- data.frame(predict(dmy, newdata = q))
 save(df_transformed, file = "df_transformed.Rdata")
 write.csv(df_transformed, file = "onehotdata_Firmicutes.csv", row.names = F)
 
-y_col = 3
-x_col = c(1:2, 4:51)
+```
+
+##make model
+```{r}
+load("df_transformed.Rdata")
+
+y_col = 2
+x_col = c(1, 3:dim(df_transformed)[2])
 
 model<-as.formula(paste(colnames(df_transformed)[y_col], "~",
                         paste(colnames(df_transformed)[x_col],collapse = "+"),
                         sep = ""))
+
 
 ```
 
@@ -965,14 +904,14 @@ ggsave(filename = "deviance_human_pathogenic_Firmicutes.jpg",
 #Stop the clock
 (proc.time()-ptm)/60
 
-
+load("gbmtest.Rdata")
+best.iter <- gbm.perf(gbmtest,method="cv",plot.it=FALSE) #this gives you the optimal number of trees based on cv performance, other methods 
 # output predictions on the TRAINING SET
 output<-predict(gbmtest, 
                 newdata=Train, 
                 n.trees=best.iter, 
                 type="response") 
 
-#need to figure out how to interpret this, or change it to be interpretable
 output<-cbind(output,Train$X.application_interaction.risk_assessment.pathogenicity_human.)
 colnames(output)<-c("output","data")
 rownames(output)<-rownames(Train)
@@ -990,6 +929,33 @@ perf<-performance(pred,"tpr","fpr")
 par(mar = c(1,1,1,1))
 plot(perf,colorize=TRUE,main="ROC full model")
 abline(a=0, b= 1)
+
+# output predictions on the Test SET
+output<-predict(gbmtest,
+                newdata=Test,
+                n.trees=best.iter,
+                type="response")
+
+
+output<-cbind(output,Test$X.application_interaction.risk_assessment.pathogenicity_human.)
+colnames(output)<-c("output","data")
+rownames(output)<-rownames(Test)
+output<-output[order(-output[,1]),]
+
+# # AUC for Bernoulli distributed responses
+par(mar = c(1,1,1,1))
+auc=colAUC(output[,1],output[,2],
+           plotROC = TRUE)
+
+print(auc)
+pred<-prediction(output[,1],output[,2])
+perf<-performance(pred,"tpr","fpr")
+
+par(mar = c(1,1,1,1))
+plot(perf,colorize=TRUE,main="ROC full model test data")
+abline(a=0, b= 1)
+
+
 ```
 
 ###plot relative influence
@@ -1001,6 +967,7 @@ x = summary(gbmtest)
 x.df= data.frame(variable = x$var,
                  relative.influence = x$rel.inf)
 
+write.csv(x.df, file = "x.df.csv")
 x.df = subset(x.df, relative.influence>=1)#take only interesting variables
 
 x.df$variable = factor(x.df$variable, levels = x.df$variable[order(x.df$relative.influence)])
@@ -1014,6 +981,363 @@ ggplot(data = x.df, aes(x = variable, y =relative.influence))+
 ggsave("Figure.relative.influence.jpg")
 
 ```
+
+
+###partial dependency plot -- intermediate step
+Get data needed for partial dependency plot. Makes "out_partial_log.Rdata". Input TrainLog.Rdata, gbmtestLog.Rdata
+```{r}
+load("gbmtest.Rdata")
+load("Train.Rdata")
+
+# Data
+out = NULL
+x = summary(gbmtest)
+varlist = x$var
+for (i in 1:length(varlist)){#begin for loop
+  i.var = which(gbmtest$var.names==varlist[i])
+  plot.out = plot.gbm(gbmtest, i.var = i.var, return.grid = TRUE)
+  names(plot.out)[1]="variable.value"
+  names(plot.out)[2]="value"
+  plot.out$variable.name=varlist[i]
+  plot.out$var = "marginal.effect"#for plotting
+  out = rbind(out, plot.out)
+}#end for loop
+
+Train1=subset(Train, X.application_interaction.risk_assessment.pathogenicity_human. == 1)
+
+i =1
+i = 3
+for (i in 1:length(varlist)){#begin for loop through variables
+  print(i)
+  i.var = which(names(Train1)==varlist[i])
+  h = hist(Train1[,i.var], plot = TRUE)
+  tmp = data.frame(variable.value = h$mids,
+                   value=h$counts/sum(h$counts),#normalize
+                   variable.name=varlist[i],
+                   var = "frequency")
+  out = rbind(out, tmp)
+}#end for loop
+out_partial_log = out
+save(out_partial_log, file = "out_partial_log.Rdata")
+
+```
+
+###Make partial dependency plots 
+```{r}
+library(latticeExtra)
+#use latticeExtra to make two plots
+load("x.df.Rdata")
+load("out_partial_log.Rdata")
+out_partial = out_partial_log
+jpeg(filename = "Figure.partial.dependency.jpeg",
+     width = 960, height = 960)
+
+# tiff(filename = "Figure.partial.dependency.tiff", compression = "none",
+#      width = 960, height = 960)
+out = out_partial
+x.df.sorted = sort(x.df$relative.influence, decreasing = FALSE, index.return= TRUE)
+x.df$sort_index_decreasing = x.df.sorted$ix
+x.df = subset(x.df, relative.influence>0)
+
+var.plot = x.df$variable
+
+out$variable.name=as.character(out$variable.name)
+
+neworder <- x.df$variable#var.plot
+library(plyr)  ## or dplyr (transform -> mutate)
+dat <- arrange(transform(out,
+                         variable.name=factor(variable.name,levels=neworder)),variable.name)
+out = dat
+
+## a variant of Figure 5.13 from Sarkar (2008)
+## http://lmdvr.r-forge.r-project.org/figures/figures.html?chapter=05;figure=05_1
+
+x_between = 5#not sure what this does, seems to affect size of subplot
+x_axis_cex = 1
+names(out)
+head(out)
+out$value = round(out$value, digits = 1)
+out_marg_eff = subset(out, var == "marginal.effect")
+out_marg_eff$value=round(out_marg_eff$value, digits = 1)
+marg_eff <- xyplot(value ~ variable.value | variable.name,
+                   data = out_marg_eff, type = "l", 
+                   #layout = c(4, 3),
+                   scales = list(relation = "free", x=list(cex=x_axis_cex)),
+                   between = list(x = x_between),
+                   ylab = "Marginal effect",
+                   xlab = "Predictor value",
+                   auto.key = FALSE,#legend,
+                   par.settings = list(strip.background=list(col="lightgrey")),
+                   par.strip.text=list(cex=1),
+                   as.table = TRUE
+)
+
+out_count = subset(out, var == "frequency")
+count_plot <- xyplot(value ~ variable.value | variable.name, data = out_count, type = "h",
+                     between = list(x = x_between),
+                     scales = list(relation = "free", x=list(cex=x_axis_cex)),
+                     ylab = "frequency",
+                     xlab = "predictor value",
+                     #lattice.options = ggplot2like.opts(),
+                     #list(superpose.symbol = list(col = c("blue")))
+                     # par.settings = ggplot2like(),
+                     auto.key=FALSE,
+                     as.table = TRUE
+                     
+)
+#count_plot
+
+# doubleYScale(marg_eff, count_plot, style1 = 0, style2 = 3, add.ylab2 = TRUE,
+#    text = c("marginal effect", "frequency"), columns = 2)
+
+plot <- doubleYScale(marg_eff, count_plot, style1 = 0, style2 = 3, add.ylab2 = TRUE, columns = 2)
+plot
+dev.off()
+
+```
+
+
+
+##use method JP sent with adjustments
+```{r}
+# Create plots of marginal effects
+load("gbmtest.Rdata")
+load("Train.Rdata")
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+library(gridExtra)
+library(grid)
+scale = 1
+best.iter <- gbm.perf(gbmtest,method="cv",plot.it=FALSE) #this gives you the optimal number of trees based on cv performance, other methods will over or under predict
+
+ls<-partial(gbmtest,n.trees=best.iter, "X.application_interaction.risk_assessment.pathogenicity_animal.",prob=TRUE)
+
+plot1 <- ls %>%
+  select(X.application_interaction.risk_assessment.pathogenicity_animal., yhat) %>%
+  na.omit() %>%
+  ggplot() +
+  geom_line(aes(x = X.application_interaction.risk_assessment.pathogenicity_animal., y = yhat),color="red") +
+  ylim(0.,1) +
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+plot2 <- Train %>%
+  select(X.application_interaction.risk_assessment.pathogenicity_animal.) %>%
+  na.omit() %>%
+  ggplot(aes(X.application_interaction.risk_assessment.pathogenicity_animal.)) +
+  geom_histogram(fill="lightblue") +
+  scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+
+  theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+
+p1 <- add_sub(plot1," ")
+p2 <- add_sub(plot2,"Pathogenicity to animal",size=12)
+
+
+aligned <- align_plots(p1, p2, align = "v")
+pls <- ggdraw()+
+  draw_plot(aligned[[2]])+
+  draw_plot(aligned[[1]],
+            scale = scale)
+
+# ###
+ls<-partial(gbmtest,n.trees=best.iter, "X.molecular_biology.GC_content.GC_content.",prob=TRUE)
+
+plot1 <- ls %>%
+  select(X.molecular_biology.GC_content.GC_content., yhat) %>%
+  na.omit() %>%
+  ggplot() +
+  geom_line(aes(x = X.molecular_biology.GC_content.GC_content., y = yhat),color="red") +
+  # ylim(0.,1) +
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+plot2 <- Train %>%
+  select(X.molecular_biology.GC_content.GC_content.) %>%
+  na.omit() %>%
+  ggplot(aes(X.molecular_biology.GC_content.GC_content.)) +
+  geom_histogram(fill="lightblue") +
+  scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+
+  theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# 
+p1 <- add_sub(plot1," ")
+p2 <- add_sub(plot2,"GC content",size=12)
+
+aligned <- align_plots(p1, p2, align = "v")
+gc <- ggdraw()+
+  draw_plot(aligned[[2]])+
+  draw_plot(aligned[[1]],
+            scale = scale)
+
+
+
+# # combine plots
+grid.arrange(pls, gc, ncol=2
+             ,left = textGrob("Model output probabilities", rot = 90, vjust = 1),right = textGrob("Frequency", rot = 270, vjust = 1))
+
+```
+
+
+##use method JP sent with adjustments -- small example
+```{r}
+# Create plots of marginal effects
+load("gbmtest.Rdata")
+load("Train.Rdata")
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+library(gridExtra)
+library(grid)
+scale = 1
+best.iter <- gbm.perf(gbmtest,method="cv",plot.it=FALSE) #this gives you the optimal number of trees based on cv performance, other methods will over or under predict
+
+ls<-partial(gbmtest,n.trees=best.iter, "X.application_interaction.risk_assessment.pathogenicity_animal.",prob=TRUE)
+
+plot1 <- ls %>%
+  select(X.application_interaction.risk_assessment.pathogenicity_animal., yhat) %>%
+  na.omit() %>%
+  ggplot() +
+  geom_line(aes(x = X.application_interaction.risk_assessment.pathogenicity_animal., y = yhat),color="red") +
+  ylim(0.,1) +
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+plot2 <- Train %>%
+  select(X.application_interaction.risk_assessment.pathogenicity_animal.) %>%
+  na.omit() %>%
+  ggplot(aes(X.application_interaction.risk_assessment.pathogenicity_animal.)) +
+  geom_histogram(fill="lightblue") +
+  scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+
+  theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+
+p1 <- add_sub(plot1," ")
+p2 <- add_sub(plot2,"Pathogenicity to animal",size=12)
+
+
+aligned <- align_plots(p1, p2, align = "v")
+pls <- ggdraw()+
+  draw_plot(aligned[[2]])+
+  draw_plot(aligned[[1]],
+            scale = scale)
+
+
+# # combine plots
+grid.arrange(pls, ncol=2
+             ,left = textGrob("Model output probabilities", rot = 90, vjust = 1),right = textGrob("Frequency", rot = 270, vjust = 1))
+
+```
+
+
+
+
+plotPartial example
+```{r}
+# Load required packages
+library(ggplot2)  # required to use autoplot
+library(randomForest)
+
+# Fit a random forest to the Boston housing data
+data (boston)  # load the boston housing data
+set.seed(101)  # for reproducibility
+boston.rf <- randomForest(cmedv ~ ., data = boston)
+
+# Partial dependence of cmedv on lstat
+boston.rf %>%
+  partial(pred.var = "lstat") %>%
+  plotPartial(rug = TRUE, train = boston)
+
+```
+
+
+##use method JP sent,  but with partial rug
+```{r}
+# Create plots of marginal effects
+load("gbmtest.Rdata")
+load("Train.Rdata")
+library("gbm")
+library("pdp")
+
+best.iter <- gbm.perf(gbmtest,method="cv",plot.it=FALSE) #this gives you the optimal number of trees based on cv performance, other methods will over or under predict
+
+ls<-partial(gbmtest,n.trees=best.iter, "X.application_interaction.risk_assessment.pathogenicity_animal.",prob=TRUE,
+            rug=TRUE)
+plot1 <- plotPartial(ls, rug=TRUE, 
+            train=Train,
+            xlab = "pathogenicity to animals")
+
+ls1<-partial(gbmtest,n.trees=best.iter, "X.molecular_biology.GC_content.GC_content.",prob=TRUE,
+            rug=TRUE)
+plot2 <- plotPartial(ls1, rug=TRUE, 
+            train=Train,
+            xlab = "GC content")
+
+# combine plots
+grid.arrange(plot1, plot2, ncol=2)#,left = textGrob("Model output probabilities", rot = 90, vjust = 1),right = textGrob("Frequency", rot = 270, vjust = 1))
+
+```
+
+
+
+
+```{r}
+library(gbm)
+load("gbmtest.Rdata")
+load("Train.Rdata")
+
+best.iter <- gbm.perf(gbmtest,method="cv",plot.it=FALSE) #this gives you the optimal number of trees based on cv performance, other methods will over or under predict
+print(best.iter)
+
+par(mfrow=c(2,3))
+
+# 1. aridity
+par(mar=c(4.2,4.2,1,4.5))
+histGR<-hist(Train$X.application_interaction.risk_assessment.pathogenicity_animal.,xlab="Pathogenic to animal",
+             breaks=20,
+             main="",axes=FALSE,xaxs="i",border="white",col="light blue")
+axis(2,histGR$y)
+par(new=TRUE,ann=FALSE,yaxt="n")
+margGR<-plot(gbmtest,i.var="X.application_interaction.risk_assessment.pathogenicity_animal.",best.iter,lwd=1.5)
+par(yaxt="s")
+axis(4,margGR$y)
+
+###this generates two separate plots
+# histGR<-hist(Train$X.application_interaction.risk_assessment.pathogenicity_animal.)
+# par(new=TRUE, ann =FALSE, yaxt="n")
+# margGR<-plot(gbmtest,i.var="X.application_interaction.risk_assessment.pathogenicity_animal.",best.iter,lwd=1.5)
+# par(yaxt="s")
+# axis(4,margGR$y)
+
+```
+
+
+
+###iml example
+```{r}
+data("Boston", package  = "MASS")
+head(Boston)
+
+
+```
+
+
 
 
 
