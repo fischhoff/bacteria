@@ -21,7 +21,9 @@ source("packages_bacteria1.R")
 ###read in BacDive data
 ###find out fields with at least threshold % coverage
 ```{r get_proportion}
-load("../DATA/PROCESSED/Data from Backdive-2.RData")
+# load("DATA/PROCESSED/Data from Backdive-2.RData")
+load("Data from Backdive-2.RData")
+# load("bacteria_species_out.Rdata")
 dim(merge)
 merge_test = unique(merge)
 dim(merge_test)
@@ -41,7 +43,7 @@ inds.na = which(!is.na(D$value))
 D = D[inds.na,]
 id_len=length(unique(D$bacdive_id))
 D$new_field = paste(D$section, D$subsection, D$field)
-save(D, file = "../DATA/PROCESSED/D.Rdata")
+save(D, file = "DATA/PROCESSED/D.Rdata")
 count=as.data.frame(table(D$new_field))#combination of subsection and field
 var1=count$Var1
 freq=count$Freq
@@ -60,21 +62,21 @@ df$Fraction = df$Frequency/id_len
 
 ###get those seen at least 1% of time
 df01 = subset(df, Fraction >= 0.01)
-save(df01, file = "../DATA/PROCESSED/df01.Rdata")
+save(df01, file = "DATA/PROCESSED/df01.Rdata")
 ```
 
 #use df01 to subset all data for those variables
 ```{r subset_01}
-load("../DATA/PROCESSED/D.RData")
+load("DATA/PROCESSED/D.RData")
 
 merge01 = subset(D, new_field %in% df01$Feature_name)
-save(merge01, file = "../DATA/PROCESSED/merge01.Rdata")
+save(merge01, file = "DATA/PROCESSED/merge01.Rdata")
 
 ```
 
 ```{r data_processing}
 ##this part is from data_processing.R 
-load("../DATA/PROCESSED/merge01.Rdata")
+load("DATA/PROCESSED/merge01.Rdata")
 
 df <- merge01
 
@@ -181,6 +183,10 @@ rm = c("culture_growth_condition.culture_medium.medium_name",
 keep = setdiff(names(q), rm)
 q = q[,keep]
 
+na_temp_range = which(is.na(q$`culture_growth_condition culture_temp temperature_range`))
+q$`culture_growth_condition culture_temp temperature_range`[na_temp_range]=
+  q$`culture_growth_condition culture_temp temperature_range1`[na_temp_range]
+
 q$molecular_biology.GC_content.GC_content= as.character(q$molecular_biology.GC_content.GC_content)
 
 a = 904
@@ -266,6 +272,7 @@ keep = c(#"application_interaction.risk_assessment.biosafety_level",
          "molecular_biology.GC_content.GC_content",
          "taxonomy_name.strains_tax_PNU.species",
          "culture_growth_condition.culture_temp.temperature_range",
+         # "culture_growth_condition culture_temp temperature_range1",
          "environment_sampling_isolation_source.origin.continent",
          # "taxonomy_name.strains_tax_PNU.phylum",
          "taxonomy_name.strains_tax_PNU.species",
@@ -481,7 +488,7 @@ ggsave(filename = "length_to_width.jpeg", plot = plot)
 
 ##find coverage by phylum for interesting field -- pathogenicity to humans
 ```{r}
-load("../DATA/PROCESSED/D.Rdata")
+load("DATA/PROCESSED/D.Rdata")
 phylum_all = subset(D, field == "phylum")
 P_all = data.frame(table(phylum_all$value))
 names(P_all)=c("phylum", "count_total")
@@ -533,7 +540,7 @@ str_detect(sample_type$value, "human")
 
 ###get data for well-covered fields for one phylum, Firmicutes
 ```{r}
-load("../DATA/PROCESSED/Data from Backdive-2.RData")
+load("Data from Backdive-2.RData")
 threshold = 0.01
 D = merge
 D = unique(D)
@@ -541,10 +548,11 @@ D = unique(D)
 #remove NA values
 inds.na = which(!is.na(D$value))
 D = D[inds.na,]
-id_len=length(unique(D$bacdive_id))
 
 D_phylum = subset(D, field == "phylum")
 D_sub = subset(D_phylum, value == "Firmicutes")
+
+id_len=length(unique(D_sub$bacdive_id))
 
 bacdive_tmp = D_sub$bacdive_id
 
@@ -552,7 +560,7 @@ D_sub_all = subset(D, bacdive_id %in% bacdive_tmp)#get all in this phylum based 
 
 D = D_sub_all
 D$new_field = paste(D$section, D$subsection, D$field)
-save(D, file = "../DATA/PROCESSED/D_Firmicutes.Rdata")
+save(D, file = "DATA/PROCESSED/D_Firmicutes.Rdata")
 count=as.data.frame(table(D$new_field))#combination of subsection and field
 var1=count$Var1
 freq=count$Freq
@@ -571,10 +579,15 @@ df$Fraction = df$Frequency/id_len
 
 ###get those seen at least 1% of time
 df01 = subset(df, Fraction >= 0.01)
-save(df01, file = "../DATA/PROCESSED/df01_Firmicutes.Rdata")
+
+save(df01, file = "DATA/PROCESSED/df01_Firmicutes.Rdata")
+
 
 merge01 = subset(D, new_field %in% df01$Feature_name)
-save(merge01, file = "../DATA/PROCESSED/merge01_Firmicutes.Rdata")
+save(merge01, file = "DATA/PROCESSED/merge01_Firmicutes.Rdata")
+
+load("DATA/PROCESSED/merge01_Firmicutes.Rdata")
+# df_freq = 
 
 ##this part is data_processing.R @
 df <- merge01
@@ -601,60 +614,16 @@ dim(temp)
 # #######
 # q <- read.csv(file = "dropnzvdata_Firmicutes.csv")
 dim(q)
-str(q)
+#str(q)
 
-str(q, list.len=ncol(q))
+#str(q, list.len=ncol(q))
+
 
 q$`molecular_biology GC_content GC_content`=as.character(q$`molecular_biology GC_content GC_content`)
-# q$`culture_growth_condition culture_temp temp1`=as.character(q$`culture_growth_condition culture_temp temp1`)
-# q$culture_growth_condition culture_temp temp2=as character(q$culture_growth_condition culture_temp temp2)
-# q$culture_growth_condition culture_temp temp = as character(q$culture_growth_condition culture_temp temp)
-#split = strsplit(as character(q$molecular_biology GC_content GC_content[905]), "-")
-rm = c("culture_growth_condition culture_medium media_link",
-       "culture_growth_condition culture_medium media_link1",
-       "culture_growth_condition culture_medium medium_name",
-       "culture_growth_condition culture_medium medium_name1",
-       "culture_growth_condition culture_medium medium_name2",
-       "culture_growth_condition culture_temp temp2","culture_growth_condition culture_temp test_type2",
-       "environment_sampling_isolation_source origin geo_loc_name",
-      # "environment_sampling_isolation_source origin sample_type",
-       "molecular_biology sequence DB_sequence",
-       "molecular_biology sequence DB_sequence2",
-       "molecular_biology sequence seq_acc_num",
-       "molecular_biology sequence seq_acc_num1",
-       "molecular_biology sequence seq_acc_num2",
-       "references reference1 NA",
-       "references reference2 NA",
-       "references reference3 NA",
-       "references reference4 NA",
-       "strain_availability strain_history history",
-       "strain_availability straininfo_link URL",
-       "strain_availability straininfo_link URL1",
-       "strain_availability straininfo_link URL2",
-       "strain_availability strains strain_number",
-       "taxonomy_name strains designation",
-       "taxonomy_name strains full_scientific_name",
-       "taxonomy_name strains genus",
-       "taxonomy_name strains species",
-       "taxonomy_name strains species_epithet",
-       "taxonomy_name strains_synonyms_PNU pnu_synonym",
-       "taxonomy_name strains_tax_PNU status_gen",
-       "taxonomy_name strains_tax_PNU status_spec",
-       "environment_sampling_isolation_source origin country",
-       # "taxonomy_name strains_tax_PNU phylum",
-       "molecular_biology sequence DB_sequence1",
-       "taxonomy_name strains class",
-       "taxonomy_name strains family",
-       #       "taxonomy_name strains ordo",
-       "taxonomy_name strains phylum",
-       # "taxonomy_name strains_tax_PNU class",
-       "taxonomy_name strains_tax_PNU family",
-       "taxonomy_name strains_tax_PNU genus",
-       "taxonomy_name strains_tax_PNU full_scientific_name",
-       #"taxonomy_name strains_tax_PNU species",#use species as identifier
-       "taxonomy_name strains_tax_PNU species_epithet")#30
-keep = setdiff(names(q), rm)
-q = q[,keep]
+
+na_temp_range = which(is.na(q$`culture_growth_condition culture_temp temperature_range`))
+q$`culture_growth_condition culture_temp temperature_range`[na_temp_range]=
+  q$`culture_growth_condition culture_temp temperature_range1`[na_temp_range]
 
 q$`molecular_biology GC_content GC_content`= as.character(q$`molecular_biology GC_content GC_content`)
 
@@ -695,6 +664,12 @@ q$`morphology_physiology cell_morphology cell_len`=as.numeric(q$`morphology_phys
 inds = which(q$`morphology_physiology cell_morphology cell_len_unit` == "mm")
 q$`morphology_physiology cell_morphology cell_len`[inds]=q$`morphology_physiology cell_morphology cell_len`[inds]*1000
 
+##now change into log
+q$`morphology_physiology cell_morphology cell_len log`=log(q$`morphology_physiology cell_morphology cell_len`)
+rm = c("morphology_physiology cell_morphology cell_len")
+keep = setdiff(names(q), rm)
+q = q[,keep]
+
 #fix morphology_physiology cell_morphology cell_width
 q$`morphology_physiology cell_morphology cell_width`=as.character(q$`morphology_physiology cell_morphology cell_width`)
 for (a in 1:dim(q)[1]){
@@ -715,6 +690,13 @@ for (a in 1:dim(q)[1]){
 q$`morphology_physiology cell_morphology cell_width`=as.numeric(q$`morphology_physiology cell_morphology cell_width`)
 inds = which(q$`morphology_physiology cell_morphology cell_width_unit` == "mm")
 q$`morphology_physiology cell_morphology cell_width`[inds] = 1000*q$`morphology_physiology cell_morphology cell_width`[inds]
+
+##now change into log
+q$`morphology_physiology cell_morphology cell_width log`=log(q$`morphology_physiology cell_morphology cell_width`)
+rm = c("morphology_physiology cell_morphology cell_width")
+keep = setdiff(names(q), rm)
+q = q[,keep]
+
 #unique(q$morphology_physiology colony_morphology incubation_period)
 q$`morphology_physiology colony_morphology incubation_period`=as.character(q$`morphology_physiology colony_morphology incubation_period`)
 for (a in 1:dim(q)[1]){
@@ -747,7 +729,7 @@ keep = c(
          "molecular_biology GC_content GC_content",
          "taxonomy_name strains_tax_PNU species",
          "culture_growth_condition culture_temp temperature_range",
-         "environment_sampling_isolation_source origin continent",
+         # "environment_sampling_isolation_source origin continent",#hard to interpret biologically
          # "taxonomy_name strains_tax_PNU phylum",
          "environment_sampling_isolation_source origin latitude",
          "environment_sampling_isolation_source origin longitude",
@@ -763,22 +745,29 @@ keep = c(
          "morphology_physiology cell_morphology motility",#factor
          "morphology_physiology cell_morphology gram_stain",#factor
          "morphology_physiology cell_morphology flagellum_arrangement",#factor; does not seem to be present for Firmicutes
-         "morphology_physiology cell_morphology cell_len",#FIXED to make numeric  assumning all in same units
+         "morphology_physiology cell_morphology cell_len log",#FIXED to make numeric  assumning all in same units
          "morphology_physiology cell_morphology cell_shape",#factor
-         "morphology_physiology cell_morphology cell_width",#need to FIX to make numeric 
+         "morphology_physiology cell_morphology cell_width log",#need to FIX to make numeric 
          # "culture_growth_condition culture_temp temp",#need to FIX to make numeric; refers to growth vs  optimum; exclude
          # "culture_growth_condition culture_pH pH",
          "morphology_physiology spore_formation ability",
-         "taxonomy_name strains ordo",
+         #"taxonomy_name strains ordo",
          "application_interaction risk_assessment pathogenicity_animal",
          "application_interaction risk_assessment pathogenicity_human",
          "bacdive_id",
          "environment_sampling_isolation_source origin sample_type",
          "morphology_physiology cell_morphology gram_stain",
-         "taxonomy_name strains_tax_PNU class")
+         "taxonomy_name strains_tax_PNU class",
+         "morphology_physiology spore_formation type",
+         "morphology_physiology colony_morphology colony_shape")
 keep = intersect(names(q), keep)
 q = q[,keep]
 
+q$`environment_sampling_isolation_source origin longitude`=as.numeric(as.character(q$`environment_sampling_isolation_source origin longitude`))
+
+q$`environment_sampling_isolation_source origin latitude`=as.numeric(as.character(q$`environment_sampling_isolation_source origin latitude`))
+
+q$`morphology_physiology colony_morphology colony_len`=as.numeric(as.character(q$`morphology_physiology colony_morphology colony_len`))
 save(q, file = "q_Firmicutes Rdata")
 load("q_Firmicutes Rdata")
 bacteria_traits_fields_subset = q
@@ -817,20 +806,34 @@ q = q[,keep]
 
 # q$`application_interaction risk_assessment biosafety_level`=factor(q$`application_interaction risk_assessment biosafety_level`)
 q$`application_interaction risk_assessment pathogenicity_animal`=as.numeric(q$`application_interaction risk_assessment pathogenicity_animal`)
-# q$`culture_growth_condition culture_temp temp`=as.numeric(q$`culture_growth_condition culture_temp temp`)
-q$`environment_sampling_isolation_source origin continent`=factor(q$`environment_sampling_isolation_source origin continent`)
+q$`culture_growth_condition culture_temp temp`=as.numeric(q$`culture_growth_condition culture_temp temp`)
+# q$`environment_sampling_isolation_source origin continent`=factor(q$`environment_sampling_isolation_source origin continent`)
 q$`morphology_physiology cell_morphology cell_shape`=factor(q$`morphology_physiology cell_morphology cell_shape`)
 q$`morphology_physiology cell_morphology gram_stain`=factor(q$`morphology_physiology cell_morphology gram_stain`)
 q$`morphology_physiology cell_morphology motility`=factor(q$`morphology_physiology cell_morphology motility`)
 # q$`morphology_physiology oxygen_tolerance oxygen_tol`=factor(q$`morphology_physiology oxygen_tolerance oxygen_tol`)
 q$`morphology_physiology spore_formation ability`=factor(q$`morphology_physiology spore_formation ability`)
-q$`taxonomy_name strains ordo`=factor(q$`taxonomy_name strains ordo`)
+#q$`taxonomy_name strains ordo`=factor(q$`taxonomy_name strains ordo`)
 
-dmy <- dummyVars(" ~ .", data = q,fullRank = T, sep=".")
+
+# # remove columns with near zero variance Global
+# nzv <- nearZeroVar(q,saveMetrics=TRUE,freqCut = 99/1)
+# nzv <- row.names(nzv[which(nzv$nzv==TRUE),])
+# dropnzv<-names(q[ , which(names(q) %in% nzv)])
+# q <- q[ , -which(names(q) %in% nzv)]
+# write.csv(q, file = "dropnzvdata_Firmicutes.csv", row.names = F)
+
+
+
+
+q_Firmicutes = q
+save(q_Firmicutes, file = "q_Firmicutes.Rdata")
+dmy <- dummyVars(" ~ .", data = q,fullRank = F, sep=".")
 
 df_transformed <- data.frame(predict(dmy, newdata = q))
 save(df_transformed, file = "df_transformed.Rdata")
 write.csv(df_transformed, file = "onehotdata_Firmicutes.csv", row.names = F)
+
 
 ```
 
@@ -838,6 +841,9 @@ write.csv(df_transformed, file = "onehotdata_Firmicutes.csv", row.names = F)
 ```{r}
 load("df_transformed.Rdata")
 
+rm = "X.culture_growth_condition.culture_temp.temp."
+keep = setdiff(names(df_transformed), rm)
+df_transformed = df_transformed[,keep]
 y_col = 2
 x_col = c(1, 3:dim(df_transformed)[2])
 
@@ -864,15 +870,15 @@ save(Test, file = "Test.Rdata")
 
 ```
 
-##fit gbm
-```{r gbm}
+##fit gbm -- Firmicutes
+```{r gbm firmicutes}
 load("Train.Rdata")
 load("Test.Rdata")
 attach(Train)
 #Start the clock
 ptm<-proc.time()
 
-n.trees = 100000
+n.trees = 50000
 shrinkage = 0.001#final version should be 0.001
 cv.folds = 10#final version should be 10
 gbmtest<- gbm(model,
@@ -958,7 +964,7 @@ abline(a=0, b= 1)
 
 ```
 
-###plot relative influence
+###plot relative influence -- Firmicutes
 ```{r}
 #format relative influence for figure
 load("gbmtest.Rdata")
@@ -967,7 +973,51 @@ x = summary(gbmtest)
 x.df= data.frame(variable = x$var,
                  relative.influence = x$rel.inf)
 
-write.csv(x.df, file = "x.df.csv")
+load("DATA/PROCESSED/df01_Firmicutes.Rdata")
+
+# df01$Feature_name = str_replace(df01$Feature_name, " " , ".")
+# df01$Feature_name = paste0("X.", df01$Feature_name)
+# names(df01)[names(df01)=="Feature_name"]="variable"
+# x.df = merge(x.df, df01)
+# keep = c("variable",
+#          "relative.influence",
+#          "Fraction")
+# x.df = x.df[,keep]
+# write.csv(x.df, file = "x.df.csv")
+# 
+# mod = lm(relative.influence ~ Fraction, data = x.df)
+
+subset(df01, Feature_name == "application_interaction risk_assessment pathogenicity_animal")
+subset(df01, Feature_name == "molecular_biology GC_content GC_content")
+
+subset(df01, Feature_name == "taxonomy_name strains ordo")
+subset(df01, Feature_name == "environment_sampling_isolation_source origin sample_type")
+
+subset(df01, Feature_name == "morphology_physiology cell_morphology gram_stain")
+
+subset(df01, Feature_name == "culture_growth_condition culture_temp temperature_range")
+
+subset(df01, Feature_name == "morphology_physiology cell_morphology cell_shape")
+subset(df01, Feature_name == "morphology_physiology cell_morphology motility")
+
+#zero influence
+subset(df01, Feature_name == "taxonomy_name strains_tax_PNU class")
+
+subset(df01, Feature_name == "morphology_physiology colony_morphology colony_shape")
+
+subset(df01, Feature_name == "morphology_physiology cell_morphology flagellum_arrangement")
+
+subset(df01, Feature_name == "morphology_physiology colony_morphology colony_len")
+
+
+
+
+
+
+
+
+
+
 x.df = subset(x.df, relative.influence>=1)#take only interesting variables
 
 x.df$variable = factor(x.df$variable, levels = x.df$variable[order(x.df$relative.influence)])
@@ -982,126 +1032,2117 @@ ggsave("Figure.relative.influence.jpg")
 
 ```
 
-
 ###partial dependency plot -- intermediate step
 Get data needed for partial dependency plot. Makes "out_partial_log.Rdata". Input TrainLog.Rdata, gbmtestLog.Rdata
 ```{r}
-load("gbmtest.Rdata")
-load("Train.Rdata")
 
-# Data
-out = NULL
-x = summary(gbmtest)
-varlist = x$var
-for (i in 1:length(varlist)){#begin for loop
-  i.var = which(gbmtest$var.names==varlist[i])
-  plot.out = plot.gbm(gbmtest, i.var = i.var, return.grid = TRUE)
-  names(plot.out)[1]="variable.value"
-  names(plot.out)[2]="value"
-  plot.out$variable.name=varlist[i]
-  plot.out$var = "marginal.effect"#for plotting
-  out = rbind(out, plot.out)
-}#end for loop
-
-Train1=subset(Train, X.application_interaction.risk_assessment.pathogenicity_human. == 1)
-
-i =1
-i = 3
-for (i in 1:length(varlist)){#begin for loop through variables
-  print(i)
-  i.var = which(names(Train1)==varlist[i])
-  h = hist(Train1[,i.var], plot = TRUE)
-  tmp = data.frame(variable.value = h$mids,
-                   value=h$counts/sum(h$counts),#normalize
-                   variable.name=varlist[i],
-                   var = "frequency")
-  out = rbind(out, tmp)
-}#end for loop
-out_partial_log = out
-save(out_partial_log, file = "out_partial_log.Rdata")
+# load("gbmtest.Rdata")
+# load("Train.Rdata")
+# 
+# # Data
+# out = NULL
+# x = summary(gbmtest)
+# varlist = x$var
+# for (i in 1:length(varlist)){#begin for loop
+#   i.var = which(gbmtest$var.names==varlist[i])
+#   plot.out = plot.gbm(gbmtest, i.var = i.var, return.grid = TRUE)
+#   names(plot.out)[1]="variable.value"
+#   names(plot.out)[2]="value"
+#   plot.out$variable.name=varlist[i]
+#   plot.out$var = "marginal.effect"#for plotting
+#   out = rbind(out, plot.out)
+# }#end for loop
+# 
+# Train1=subset(Train, X.application_interaction.risk_assessment.pathogenicity_human. == 1)
+# 
+# i =1
+# i = 3
+# for (i in 1:length(varlist)){#begin for loop through variables
+#   print(i)
+#   i.var = which(names(Train1)==varlist[i])
+#   h = hist(Train1[,i.var], plot = TRUE)
+#   tmp = data.frame(variable.value = h$mids,
+#                    value=h$counts/sum(h$counts),#normalize
+#                    variable.name=varlist[i],
+#                    var = "frequency")
+#   out = rbind(out, tmp)
+# }#end for loop
+# out_partial_log = out
+# save(out_partial_log, file = "out_partial_log.Rdata")
 
 ```
 
 ###Make partial dependency plots 
 ```{r}
-library(latticeExtra)
-#use latticeExtra to make two plots
-load("x.df.Rdata")
-load("out_partial_log.Rdata")
-out_partial = out_partial_log
-jpeg(filename = "Figure.partial.dependency.jpeg",
-     width = 960, height = 960)
 
-# tiff(filename = "Figure.partial.dependency.tiff", compression = "none",
+# library(latticeExtra)
+# #use latticeExtra to make two plots
+# load("x.df.Rdata")
+# load("out_partial_log.Rdata")
+# out_partial = out_partial_log
+# jpeg(filename = "Figure.partial.dependency.jpeg",
 #      width = 960, height = 960)
-out = out_partial
-x.df.sorted = sort(x.df$relative.influence, decreasing = FALSE, index.return= TRUE)
-x.df$sort_index_decreasing = x.df.sorted$ix
-x.df = subset(x.df, relative.influence>0)
-
-var.plot = x.df$variable
-
-out$variable.name=as.character(out$variable.name)
-
-neworder <- x.df$variable#var.plot
-library(plyr)  ## or dplyr (transform -> mutate)
-dat <- arrange(transform(out,
-                         variable.name=factor(variable.name,levels=neworder)),variable.name)
-out = dat
-
-## a variant of Figure 5.13 from Sarkar (2008)
-## http://lmdvr.r-forge.r-project.org/figures/figures.html?chapter=05;figure=05_1
-
-x_between = 5#not sure what this does, seems to affect size of subplot
-x_axis_cex = 1
-names(out)
-head(out)
-out$value = round(out$value, digits = 1)
-out_marg_eff = subset(out, var == "marginal.effect")
-out_marg_eff$value=round(out_marg_eff$value, digits = 1)
-marg_eff <- xyplot(value ~ variable.value | variable.name,
-                   data = out_marg_eff, type = "l", 
-                   #layout = c(4, 3),
-                   scales = list(relation = "free", x=list(cex=x_axis_cex)),
-                   between = list(x = x_between),
-                   ylab = "Marginal effect",
-                   xlab = "Predictor value",
-                   auto.key = FALSE,#legend,
-                   par.settings = list(strip.background=list(col="lightgrey")),
-                   par.strip.text=list(cex=1),
-                   as.table = TRUE
-)
-
-out_count = subset(out, var == "frequency")
-count_plot <- xyplot(value ~ variable.value | variable.name, data = out_count, type = "h",
-                     between = list(x = x_between),
-                     scales = list(relation = "free", x=list(cex=x_axis_cex)),
-                     ylab = "frequency",
-                     xlab = "predictor value",
-                     #lattice.options = ggplot2like.opts(),
-                     #list(superpose.symbol = list(col = c("blue")))
-                     # par.settings = ggplot2like(),
-                     auto.key=FALSE,
-                     as.table = TRUE
-                     
-)
-#count_plot
-
-# doubleYScale(marg_eff, count_plot, style1 = 0, style2 = 3, add.ylab2 = TRUE,
-#    text = c("marginal effect", "frequency"), columns = 2)
-
-plot <- doubleYScale(marg_eff, count_plot, style1 = 0, style2 = 3, add.ylab2 = TRUE, columns = 2)
-plot
-dev.off()
+# 
+# # tiff(filename = "Figure.partial.dependency.tiff", compression = "none",
+# #      width = 960, height = 960)
+# out = out_partial
+# x.df.sorted = sort(x.df$relative.influence, decreasing = FALSE, index.return= TRUE)
+# x.df$sort_index_decreasing = x.df.sorted$ix
+# x.df = subset(x.df, relative.influence>0)
+# 
+# var.plot = x.df$variable
+# 
+# out$variable.name=as.character(out$variable.name)
+# 
+# neworder <- x.df$variable#var.plot
+# library(plyr)  ## or dplyr (transform -> mutate)
+# dat <- arrange(transform(out,
+#                          variable.name=factor(variable.name,levels=neworder)),variable.name)
+# out = dat
+# 
+# ## a variant of Figure 5.13 from Sarkar (2008)
+# ## http://lmdvr.r-forge.r-project.org/figures/figures.html?chapter=05;figure=05_1
+# 
+# x_between = 5#not sure what this does, seems to affect size of subplot
+# x_axis_cex = 1
+# names(out)
+# head(out)
+# out$value = round(out$value, digits = 1)
+# out_marg_eff = subset(out, var == "marginal.effect")
+# out_marg_eff$value=round(out_marg_eff$value, digits = 1)
+# marg_eff <- xyplot(value ~ variable.value | variable.name,
+#                    data = out_marg_eff, type = "l", 
+#                    #layout = c(4, 3),
+#                    scales = list(relation = "free", x=list(cex=x_axis_cex)),
+#                    between = list(x = x_between),
+#                    ylab = "Marginal effect",
+#                    xlab = "Predictor value",
+#                    auto.key = FALSE,#legend,
+#                    par.settings = list(strip.background=list(col="lightgrey")),
+#                    par.strip.text=list(cex=1),
+#                    as.table = TRUE
+# )
+# 
+# out_count = subset(out, var == "frequency")
+# count_plot <- xyplot(value ~ variable.value | variable.name, data = out_count, type = "h",
+#                      between = list(x = x_between),
+#                      scales = list(relation = "free", x=list(cex=x_axis_cex)),
+#                      ylab = "frequency",
+#                      xlab = "predictor value",
+#                      #lattice.options = ggplot2like.opts(),
+#                      #list(superpose.symbol = list(col = c("blue")))
+#                      # par.settings = ggplot2like(),
+#                      auto.key=FALSE,
+#                      as.table = TRUE
+#                      
+# )
+# #count_plot
+# 
+# # doubleYScale(marg_eff, count_plot, style1 = 0, style2 = 3, add.ylab2 = TRUE,
+# #    text = c("marginal effect", "frequency"), columns = 2)
+# 
+# plot <- doubleYScale(marg_eff, count_plot, style1 = 0, style2 = 3, add.ylab2 = TRUE, columns = 2)
+# plot
+# dev.off()
 
 ```
 
 
 
-##use method JP sent with adjustments
+##use method JP sent with adjustments -- Firmicutes
+```{r}
+
+# # Create plots of marginal effects
+# load("gbmtest.Rdata")
+# load("Train.Rdata")
+# library(dplyr)
+# library(ggplot2)
+# library(cowplot)
+# library(gridExtra)
+# library(grid)
+# scale = 1
+# best.iter <- gbm.perf(gbmtest,method="cv",plot.it=FALSE) #this gives you the optimal number of trees based on cv performance, other methods will over or under predict
+# 
+# ls<-partial(gbmtest,n.trees=best.iter, "X.application_interaction.risk_assessment.pathogenicity_animal.",prob=TRUE)
+# 
+# plot1 <- ls %>%
+#   select(X.application_interaction.risk_assessment.pathogenicity_animal., yhat) %>%
+#   na.omit() %>%
+#   ggplot() +
+#   geom_line(aes(x = X.application_interaction.risk_assessment.pathogenicity_animal., y = yhat),color="red") +
+#   ylim(0.,1) +
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   theme(axis.text.x=element_blank(),
+#         axis.ticks.x=element_blank())
+# 
+# plot2 <- Train %>%
+#   select(X.application_interaction.risk_assessment.pathogenicity_animal.) %>%
+#   na.omit() %>%
+#   ggplot(aes(X.application_interaction.risk_assessment.pathogenicity_animal.)) +
+#   geom_histogram(fill="lightblue") +
+#   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+
+#   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# 
+# p1 <- add_sub(plot1," ")
+# p2 <- add_sub(plot2,"Pathogenicity to animal",size=12)
+# 
+# 
+# aligned <- align_plots(p1, p2, align = "v")
+# pls <- ggdraw()+
+#   draw_plot(aligned[[2]])+
+#   draw_plot(aligned[[1]],
+#             scale = scale)
+# 
+# # ###GC content
+# ls<-partial(gbmtest,n.trees=best.iter, "X.molecular_biology.GC_content.GC_content.",prob=TRUE)
+# 
+# plot1 <- ls %>%
+#   select(X.molecular_biology.GC_content.GC_content., yhat) %>%
+#   na.omit() %>%
+#   ggplot() +
+#   geom_line(aes(x = X.molecular_biology.GC_content.GC_content., y = yhat),color="red") +
+#   # ylim(0.,1) +
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   theme(axis.text.x=element_blank(),
+#         axis.ticks.x=element_blank())
+# 
+# plot2 <- Train %>%
+#   select(X.molecular_biology.GC_content.GC_content.) %>%
+#   na.omit() %>%
+#   ggplot(aes(X.molecular_biology.GC_content.GC_content.)) +
+#   geom_histogram(fill="lightblue") +
+#   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+
+#   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# # 
+# p1 <- add_sub(plot1," ")
+# p2 <- add_sub(plot2,"GC content",size=12)
+# 
+# aligned <- align_plots(p1, p2, align = "v")
+# gc <- ggdraw()+
+#   draw_plot(aligned[[2]])+
+#   draw_plot(aligned[[1]],
+#             scale = scale)
+# 
+# # ### Bacillales
+# ls<-partial(gbmtest,n.trees=best.iter, "X.taxonomy_name.strains.ordo.Bacillales",prob=TRUE)
+# 
+# plot1 <- ls %>%
+#   select(X.taxonomy_name.strains.ordo.Bacillales, yhat) %>%
+#   na.omit() %>%
+#   ggplot() +
+#   geom_line(aes(x = X.taxonomy_name.strains.ordo.Bacillales, y = yhat),color="red") +
+#   # ylim(0.,1) +
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   theme(axis.text.x=element_blank(),
+#         axis.ticks.x=element_blank())
+# 
+# plot2 <- Train %>%
+#   select(X.taxonomy_name.strains.ordo.Bacillales) %>%
+#   na.omit() %>%
+#   ggplot(aes(X.taxonomy_name.strains.ordo.Bacillales)) +
+#   geom_histogram(fill="lightblue") +
+#   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+
+#   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# # 
+# p1 <- add_sub(plot1," ")
+# p2 <- add_sub(plot2,"Order Bacillales",size=12)
+# 
+# aligned <- align_plots(p1, p2, align = "v")
+# ba <- ggdraw()+
+#   draw_plot(aligned[[2]])+
+#   draw_plot(aligned[[1]],
+#             scale = scale)
+# 
+# # ### mesophilic
+# ls<-partial(gbmtest,n.trees=best.iter, "X.culture_growth_condition.culture_temp.temperature_range.mesophilic",prob=TRUE)
+# 
+# plot1 <- ls %>%
+#   select(X.culture_growth_condition.culture_temp.temperature_range.mesophilic, yhat) %>%
+#   na.omit() %>%
+#   ggplot() +
+#   geom_line(aes(x = X.culture_growth_condition.culture_temp.temperature_range.mesophilic, y = yhat),color="red") +
+#   # ylim(0.,1) +
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   theme(axis.text.x=element_blank(),
+#         axis.ticks.x=element_blank())
+# 
+# plot2 <- Train %>%
+#   select(X.culture_growth_condition.culture_temp.temperature_range.mesophilic) %>%
+#   na.omit() %>%
+#   ggplot(aes(X.culture_growth_condition.culture_temp.temperature_range.mesophilic)) +
+#   geom_histogram(fill="lightblue") +
+#   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+
+#   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# #
+# p1 <- add_sub(plot1," ")
+# p2 <- add_sub(plot2,"mesophilic",size=12)
+# 
+# aligned <- align_plots(p1, p2, align = "v")
+# meso <- ggdraw()+
+#   draw_plot(aligned[[2]])+
+#   draw_plot(aligned[[1]],
+#             scale = scale)
+# 
+# 
+# # ### thermophilic
+# ls<-partial(gbmtest,n.trees=best.iter, "X.culture_growth_condition.culture_temp.temperature_range.thermophilic",prob=TRUE)
+# 
+# plot1 <- ls %>%
+#   select(X.culture_growth_condition.culture_temp.temperature_range.thermophilic, yhat) %>%
+#   na.omit() %>%
+#   ggplot() +
+#   geom_line(aes(x = X.culture_growth_condition.culture_temp.temperature_range.thermophilic, y = yhat),color="red") +
+#   # ylim(0.,1) +
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   theme(axis.text.x=element_blank(),
+#         axis.ticks.x=element_blank())
+# 
+# plot2 <- Train %>%
+#   select(X.culture_growth_condition.culture_temp.temperature_range.thermophilic) %>%
+#   na.omit() %>%
+#   ggplot(aes(X.culture_growth_condition.culture_temp.temperature_range.thermophilic)) +
+#   geom_histogram(fill="lightblue") +
+#   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+
+#   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# # 
+# p1 <- add_sub(plot1," ")
+# p2 <- add_sub(plot2,"thermophilic",size=12)
+# 
+# aligned <- align_plots(p1, p2, align = "v")
+# th <- ggdraw()+
+#   draw_plot(aligned[[2]])+
+#   draw_plot(aligned[[1]],
+#             scale = scale)
+# 
+# # # ### Middle South America
+# # ls<-partial(gbmtest,n.trees=best.iter, "X.environment_sampling_isolation_source.origin.continent.Middle.and.South.America",prob=TRUE)
+# # 
+# # plot1 <- ls %>%
+# #   select(X.environment_sampling_isolation_source.origin.continent.Middle.and.South.America, yhat) %>%
+# #   na.omit() %>%
+# #   ggplot() +
+# #   geom_line(aes(x = X.environment_sampling_isolation_source.origin.continent.Middle.and.South.America, y = yhat),color="red") +
+# #   # ylim(0.,1) +
+# #   ylab(" ") +
+# #   theme_minimal() +
+# #   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+# #   theme(axis.text.x=element_blank(),
+# #         axis.ticks.x=element_blank())
+# # 
+# # plot2 <- Train %>%
+# #   select(X.environment_sampling_isolation_source.origin.continent.Middle.and.South.America) %>%
+# #   na.omit() %>%
+# #   ggplot(aes(X.environment_sampling_isolation_source.origin.continent.Middle.and.South.America)) +
+# #   geom_histogram(fill="lightblue") +
+# #   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+# #   ylab(" ") +
+# #   theme_minimal() +
+# #   theme(axis.title.x = element_blank())+
+# #   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# # # 
+# # p1 <- add_sub(plot1," ")
+# # p2 <- add_sub(plot2,"Latin America",size=12)
+# # 
+# # aligned <- align_plots(p1, p2, align = "v")
+# # la <- ggdraw()+
+# #   draw_plot(aligned[[2]])+
+# #   draw_plot(aligned[[1]],
+# #             scale = scale)
+# # 
+# # # ### Asia
+# # ls<-partial(gbmtest,n.trees=best.iter, "X.environment_sampling_isolation_source.origin.continent.Asia",prob=TRUE)
+# # 
+# # plot1 <- ls %>%
+# #   select(X.environment_sampling_isolation_source.origin.continent.Asia, yhat) %>%
+# #   na.omit() %>%
+# #   ggplot() +
+# #   geom_line(aes(x = X.environment_sampling_isolation_source.origin.continent.Asia, y = yhat),color="red") +
+# #   # ylim(0.,1) +
+# #   ylab(" ") +
+# #   theme_minimal() +
+# #   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+# #   theme(axis.text.x=element_blank(),
+# #         axis.ticks.x=element_blank())
+# # 
+# # plot2 <- Train %>%
+# #   select(X.environment_sampling_isolation_source.origin.continent.Asia) %>%
+# #   na.omit() %>%
+# #   ggplot(aes(X.environment_sampling_isolation_source.origin.continent.Asia)) +
+# #   geom_histogram(fill="lightblue") +
+# #   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+# #   ylab(" ") +
+# #   theme_minimal() +
+# #   theme(axis.title.x = element_blank())+
+# #   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# # # 
+# # p1 <- add_sub(plot1," ")
+# # p2 <- add_sub(plot2,"Asia",size=12)
+# # 
+# # aligned <- align_plots(p1, p2, align = "v")
+# # as <- ggdraw()+
+# #   draw_plot(aligned[[2]])+
+# #   draw_plot(aligned[[1]],
+# #             scale = scale)
+# 
+# # ### Lactobacillales
+# ls<-partial(gbmtest,n.trees=best.iter, "X.taxonomy_name.strains.ordo.Lactobacillales",prob=TRUE)
+# 
+# plot1 <- ls %>%
+#   select(X.taxonomy_name.strains.ordo.Lactobacillales, yhat) %>%
+#   na.omit() %>%
+#   ggplot() +
+#   geom_line(aes(x = X.taxonomy_name.strains.ordo.Lactobacillales, y = yhat),color="red") +
+#   # ylim(0.,1) +
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   theme(axis.text.x=element_blank(),
+#         axis.ticks.x=element_blank())
+# 
+# plot2 <- Train %>%
+#   select(X.taxonomy_name.strains.ordo.Lactobacillales) %>%
+#   na.omit() %>%
+#   ggplot(aes(X.taxonomy_name.strains.ordo.Lactobacillales)) +
+#   geom_histogram(fill="lightblue") +
+#   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+
+#   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# # 
+# p1 <- add_sub(plot1," ")
+# p2 <- add_sub(plot2,"Order Lactobacillales",size=12)
+# 
+# aligned <- align_plots(p1, p2, align = "v")
+# lac <- ggdraw()+
+#   draw_plot(aligned[[2]])+
+#   draw_plot(aligned[[1]],
+#             scale = scale)
+# 
+# # ### Europe
+# # ls<-partial(gbmtest,n.trees=best.iter, "X.environment_sampling_isolation_source.origin.continent.Europe",prob=TRUE)
+# # 
+# # plot1 <- ls %>%
+# #   select(X.environment_sampling_isolation_source.origin.continent.Europe, yhat) %>%
+# #   na.omit() %>%
+# #   ggplot() +
+# #   geom_line(aes(x = X.environment_sampling_isolation_source.origin.continent.Europe, y = yhat),color="red") +
+# #   # ylim(0.,1) +
+# #   ylab(" ") +
+# #   theme_minimal() +
+# #   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+# #   theme(axis.text.x=element_blank(),
+# #         axis.ticks.x=element_blank())
+# # 
+# # plot2 <- Train %>%
+# #   select(X.environment_sampling_isolation_source.origin.continent.Europe) %>%
+# #   na.omit() %>%
+# #   ggplot(aes(X.environment_sampling_isolation_source.origin.continent.Europe)) +
+# #   geom_histogram(fill="lightblue") +
+# #   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+# #   ylab(" ") +
+# #   theme_minimal() +
+# #   theme(axis.title.x = element_blank())+
+# #   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# # # 
+# # p1 <- add_sub(plot1," ")
+# # p2 <- add_sub(plot2,"Europe",size=12)
+# # 
+# # aligned <- align_plots(p1, p2, align = "v")
+# # eu <- ggdraw()+
+# #   draw_plot(aligned[[2]])+
+# #   draw_plot(aligned[[1]],
+# #             scale = scale)
+# 
+# # ### gram stain negative
+# ls<-partial(gbmtest,n.trees=best.iter, "X.morphology_physiology.cell_morphology.gram_stain.negative",prob=TRUE)
+# 
+# plot1 <- ls %>%
+#   select(X.morphology_physiology.cell_morphology.gram_stain.negative, yhat) %>%
+#   na.omit() %>%
+#   ggplot() +
+#   geom_line(aes(x = X.morphology_physiology.cell_morphology.gram_stain.negative, y = yhat),color="red") +
+#   # ylim(0.,1) +
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   theme(axis.text.x=element_blank(),
+#         axis.ticks.x=element_blank())
+# 
+# plot2 <- Train %>%
+#   select(X.morphology_physiology.cell_morphology.gram_stain.negative) %>%
+#   na.omit() %>%
+#   ggplot(aes(X.morphology_physiology.cell_morphology.gram_stain.negative)) +
+#   geom_histogram(fill="lightblue") +
+#   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+
+#   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# # 
+# p1 <- add_sub(plot1," ")
+# p2 <- add_sub(plot2,"gram stain negative",size=12)
+# 
+# aligned <- align_plots(p1, p2, align = "v")
+# gram_neg <- ggdraw()+
+#   draw_plot(aligned[[2]])+
+#   draw_plot(aligned[[1]],
+#             scale = scale)
+# 
+# # ### gram stain 
+# ls<-partial(gbmtest,n.trees=best.iter, "X.morphology_physiology.cell_morphology.cell_shape.coccus.shaped",prob=TRUE)
+# 
+# plot1 <- ls %>%
+#   select(X.morphology_physiology.cell_morphology.cell_shape.coccus.shaped, yhat) %>%
+#   na.omit() %>%
+#   ggplot() +
+#   geom_line(aes(x = X.morphology_physiology.cell_morphology.cell_shape.coccus.shaped, y = yhat),color="red") +
+#   # ylim(0.,1) +
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   theme(axis.text.x=element_blank(),
+#         axis.ticks.x=element_blank())
+# 
+# plot2 <- Train %>%
+#   select(X.morphology_physiology.cell_morphology.cell_shape.coccus.shaped) %>%
+#   na.omit() %>%
+#   ggplot(aes(X.morphology_physiology.cell_morphology.cell_shape.coccus.shaped)) +
+#   geom_histogram(fill="lightblue") +
+#   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+
+#   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# # 
+# p1 <- add_sub(plot1," ")
+# p2 <- add_sub(plot2,"cell shape coccus",size=12)
+# 
+# aligned <- align_plots(p1, p2, align = "v")
+# coccus <- ggdraw()+
+#   draw_plot(aligned[[2]])+
+#   draw_plot(aligned[[1]],
+#             scale = scale)
+# 
+# 
+# # ### human origin
+# ls<-partial(gbmtest,n.trees=best.iter, "human_origin",prob=TRUE)
+# 
+# plot1 <- ls %>%
+#   select(human_origin, yhat) %>%
+#   na.omit() %>%
+#   ggplot() +
+#   geom_line(aes(x = human_origin, y = yhat),color="red") +
+#   # ylim(0.,1) +
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   theme(axis.text.x=element_blank(),
+#         axis.ticks.x=element_blank())
+# 
+# plot2 <- Train %>%
+#   select(human_origin) %>%
+#   na.omit() %>%
+#   ggplot(aes(human_origin)) +
+#   geom_histogram(fill="lightblue") +
+#   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+
+#   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# # 
+# p1 <- add_sub(plot1," ")
+# p2 <- add_sub(plot2,"human origin",size=12)
+# 
+# aligned <- align_plots(p1, p2, align = "v")
+# hu <- ggdraw()+
+#   draw_plot(aligned[[2]])+
+#   draw_plot(aligned[[1]],
+#             scale = scale)
+# 
+# # ### North America
+# # ls<-partial(gbmtest,n.trees=best.iter, "X.environment_sampling_isolation_source.origin.continent.North.America",prob=TRUE)
+# # 
+# # plot1 <- ls %>%
+# #   select(X.environment_sampling_isolation_source.origin.continent.North.America, yhat) %>%
+# #   na.omit() %>%
+# #   ggplot() +
+# #   geom_line(aes(x = X.environment_sampling_isolation_source.origin.continent.North.America, y = yhat),color="red") +
+# #   # ylim(0.,1) +
+# #   ylab(" ") +
+# #   theme_minimal() +
+# #   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+# #   theme(axis.text.x=element_blank(),
+# #         axis.ticks.x=element_blank())
+# # 
+# # plot2 <- Train %>%
+# #   select(X.environment_sampling_isolation_source.origin.continent.North.America) %>%
+# #   na.omit() %>%
+# #   ggplot(aes(X.environment_sampling_isolation_source.origin.continent.North.America)) +
+# #   geom_histogram(fill="lightblue") +
+# #   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+# #   ylab(" ") +
+# #   theme_minimal() +
+# #   theme(axis.title.x = element_blank())+
+# #   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# # # 
+# # p1 <- add_sub(plot1," ")
+# # p2 <- add_sub(plot2,"North America",size=12)
+# # 
+# # aligned <- align_plots(p1, p2, align = "v")
+# # nam <- ggdraw()+
+# #   draw_plot(aligned[[2]])+
+# #   draw_plot(aligned[[1]],
+# #             scale = scale)
+# 
+# # ### psychrophilic
+# ls<-partial(gbmtest,n.trees=best.iter, "X.culture_growth_condition.culture_temp.temperature_range.psychrophilic",prob=TRUE)
+# 
+# plot1 <- ls %>%
+#   select(X.culture_growth_condition.culture_temp.temperature_range.psychrophilic, yhat) %>%
+#   na.omit() %>%
+#   ggplot() +
+#   geom_line(aes(x = X.culture_growth_condition.culture_temp.temperature_range.psychrophilic, y = yhat),color="red") +
+#   # ylim(0.,1) +
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   theme(axis.text.x=element_blank(),
+#         axis.ticks.x=element_blank())
+# 
+# plot2 <- Train %>%
+#   select(X.culture_growth_condition.culture_temp.temperature_range.psychrophilic) %>%
+#   na.omit() %>%
+#   ggplot(aes(X.culture_growth_condition.culture_temp.temperature_range.psychrophilic)) +
+#   geom_histogram(fill="lightblue") +
+#   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+
+#   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# # 
+# p1 <- add_sub(plot1," ")
+# p2 <- add_sub(plot2,"psychrophilic",size=12)
+# 
+# aligned <- align_plots(p1, p2, align = "v")
+# psy <- ggdraw()+
+#   draw_plot(aligned[[2]])+
+#   draw_plot(aligned[[1]],
+#             scale = scale)
+# 
+# #Clostridiales
+# ls<-partial(gbmtest,n.trees=best.iter, "X.taxonomy_name.strains.ordo.Clostridiales",prob=TRUE)
+# 
+# plot1 <- ls %>%
+#   select(X.taxonomy_name.strains.ordo.Clostridiales, yhat) %>%
+#   na.omit() %>%
+#   ggplot() +
+#   geom_line(aes(x = X.taxonomy_name.strains.ordo.Clostridiales, y = yhat),color="red") +
+#   # ylim(0.,1) +
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   theme(axis.text.x=element_blank(),
+#         axis.ticks.x=element_blank())
+# 
+# plot2 <- Train %>%
+#   select(X.taxonomy_name.strains.ordo.Clostridiales) %>%
+#   na.omit() %>%
+#   ggplot(aes(X.taxonomy_name.strains.ordo.Clostridiales)) +
+#   geom_histogram(fill="lightblue") +
+#   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+
+#   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# # 
+# p1 <- add_sub(plot1," ")
+# p2 <- add_sub(plot2,"Clostridiales",size=12)
+# 
+# aligned <- align_plots(p1, p2, align = "v")
+# cl <- ggdraw()+
+#   draw_plot(aligned[[2]])+
+#   draw_plot(aligned[[1]],
+#             scale = scale)
+# 
+# # ### cell length
+# # ls<-partial(gbmtest,n.trees=best.iter, "X.morphology_physiology.cell_morphology.cell_len.",prob=TRUE)
+# # 
+# # plot1 <- ls %>%
+# #   select(X.morphology_physiology.cell_morphology.cell_len., yhat) %>%
+# #   na.omit() %>%
+# #   ggplot() +
+# #   geom_line(aes(x = X.morphology_physiology.cell_morphology.cell_len., y = yhat),color="red") +
+# #   # ylim(0.,1) +
+# #   ylab(" ") +
+# #   theme_minimal() +
+# #   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+# #   theme(axis.text.x=element_blank(),
+# #         axis.ticks.x=element_blank())
+# # 
+# # plot2 <- Train %>%
+# #   select(X.morphology_physiology.cell_morphology.cell_len.) %>%
+# #   na.omit() %>%
+# #   ggplot(aes(X.morphology_physiology.cell_morphology.cell_len.)) +
+# #   geom_histogram(fill="lightblue") +
+# #   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+# #   ylab(" ") +
+# #   theme_minimal() +
+# #   theme(axis.title.x = element_blank())+
+# #   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# # # 
+# # p1 <- add_sub(plot1," ")
+# # p2 <- add_sub(plot2,"cell length",size=12)
+# # 
+# # aligned <- align_plots(p1, p2, align = "v")
+# # cell_length <- ggdraw()+
+# #   draw_plot(aligned[[2]])+
+# #   draw_plot(aligned[[1]],
+# #             scale = scale)
+# 
+# # ### motility.TRUE
+# ls<-partial(gbmtest,n.trees=best.iter, "X.morphology_physiology.cell_morphology.motility.TRUE",prob=TRUE)
+# 
+# plot1 <- ls %>%
+#   select(X.morphology_physiology.cell_morphology.motility.TRUE, yhat) %>%
+#   na.omit() %>%
+#   ggplot() +
+#   geom_line(aes(x = X.morphology_physiology.cell_morphology.motility.TRUE, y = yhat),color="red") +
+#   # ylim(0.,1) +
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   theme(axis.text.x=element_blank(),
+#         axis.ticks.x=element_blank())
+# 
+# plot2 <- Train %>%
+#   select(X.morphology_physiology.cell_morphology.motility.TRUE) %>%
+#   na.omit() %>%
+#   ggplot(aes(X.morphology_physiology.cell_morphology.motility.TRUE)) +
+#   geom_histogram(fill="lightblue") +
+#   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+#   ylab(" ") +
+#   theme_minimal() +
+#   theme(axis.title.x = element_blank())+
+#   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# # 
+# p1 <- add_sub(plot1," ")
+# p2 <- add_sub(plot2,"motility TRUE",size=12)
+# 
+# aligned <- align_plots(p1, p2, align = "v")
+# motil <- ggdraw()+
+#   draw_plot(aligned[[2]])+
+#   draw_plot(aligned[[1]],
+#             scale = scale)
+# 
+# 
+# grid.arrange(pls,#animal
+#              gc,#gc
+#              ba, #bacillales
+#              lac, #lactobacillales
+#              hu,#human
+#              gram_neg,#gram stain negative
+#              meso,#mesophilic
+#              cl,#clostridiales
+#              coccus,#
+#              ncol=3,
+#              left = textGrob("Model output probabilities", rot = 90, vjust = 1),right = textGrob("Frequency", rot = 270, vjust = 1))
+#psy,#psychrophilic
+#th,#thermophilic
+#cell_length,#cell_len
+
+```
+
+##Bootstrap permutations -- AUC -- Firmicutes
+```{r boot_perm_auc_firmicutes}
+load("df_transformed.Rdata")
+rm = c("X.culture_growth_condition.culture_temp.temp.")
+keep = setdiff(names(df_transformed), rm)
+df_transformed= df_transformed[, keep]
+#Start the clock
+ptm<-proc.time()
+
+permutedAUC<-c()
+
+word = "Firmicutes"
+best.iter.list = c()
+
+i=1
+while (i <= 50) {
+  # for permutation loop
+  
+  ## random permutation of Label
+  randomLabel<-sample(df_transformed$X.application_interaction.risk_assessment.pathogenicity_human.)
+
+  pan2<-cbind(randomLabel,df_transformed)
+  #remove previous label
+  rm = "X.application_interaction.risk_assessment.pathogenicity_human."
+  keep = setdiff(names(pan2),rm)
+  pan2 = pan2[,keep]
+  
+  pan2[,1]<-sapply(pan2[,1],as.character)
+  
+  ## create training and test sets
+  intrain2<-createDataPartition(y=pan2$randomLabel,
+                                p=0.8,
+                                list=FALSE)
+  
+  test2<-pan2[-intrain2,]
+  training2<-pan2[intrain2,]
+  
+  check<-1-is.na(training2)*1
+  checksum<-apply(check,2,sum)
+  if(length(which(checksum>=2))==dim(training2)[2]){#this makes sure we don't get any columns with all zeros. Should be == to the number of columns
+ 
+  
+    ## random permutation of Labels ~ traits
+    y_col = 1
+    x_col = c(2:dim(pan2)[2])
+    
+    model<-as.formula(paste(colnames(pan2)[y_col], "~",
+                            paste(colnames(pan2)[x_col],collapse = "+"),
+                            sep = ""))
+    
+    
+    # model2<-as.formula(paste(colnames(pan2)[1], "~",
+    #                          paste(traits$Predictor,collapse = "+"), #traits
+    #                          collapse="+"))
+    gbm2<- gbm(model,
+                   data=training2, 
+                   distribution="bernoulli",
+                   n.trees=40000,
+                   shrinkage=0.001,
+                   interaction.depth=3,
+                   bag.fraction=0.50,
+                   train.fraction=1,
+                   n.minobsinnode=3,
+                   cv.folds=10,
+                   keep.data=TRUE)
+    # verbose=TRUE)
+    
+    #check performance using 5-fold cross-validation
+    best.iter2 <- gbm.perf(gbm2,method="cv",plot.it=FALSE) #OOB method under predicts
+    best.iter.list=c(best.iter.list, best.iter2)
+
+
+        #   batsum2<-summary.gbm(gbm2,n.trees=best.iter,method=relative.influence,plotit=FALSE)
+    
+    ## LABEL
+    ## predictions on the TRAINING SET
+    output2<-predict(gbm2, newdata=training2, n.trees=best.iter2, type="response") 
+    output2<-cbind(output2,as.numeric(training2$randomLabel))
+    #   colnames(output2)<-c("output","label")
+    #   output2<-output2[order(-as.numeric(output2[,1])),]
+    
+    # # training AUC for Bernoulli distributed responses
+    auc2=colAUC(output2[,1],output2[,2])
+    
+    # Predictions on the TEST set
+    output.test2<-predict(gbm2, newdata=test2, n.trees=best.iter2, type="response") 
+    output.test2<-cbind(output.test2,as.numeric(test2$randomLabel))
+    # colnames(output.test2)<-c("output","label")
+    # output.test2<-output.test2[order(-output.test2[,1]),]
+    # plot(output.test)
+    
+    ## test AUC for Bernoulli distributed responses
+    auctest2=colAUC(output.test2[,1],output.test2[,2])
+    
+    permutedAUC[i]<-auctest2
+    print(auctest2)
+    i=i+1
+    print(i)#check where we are in bootstrap
+  } else i=i
+}
+
+sum(is.na(permutedAUC)*1) #how many NAs
+permutedAUC2<-na.omit(permutedAUC)
+mean(permutedAUC2)
+sd(permutedAUC2)
+
+#Stop the clock
+(proc.time()-ptm)/60
+
+write.csv(best.iter.list, file = paste0("best.iter.list.","AUC.", word, ".csv"))
+
+```
+
+##Bootstrap permutations for distribution of relative influence  -- Firmicutes
+```{r boot_relative_influence_Firmicutes}
+list_save = list()
+
+load("df_transformed.Rdata")
+rm = c("X.culture_growth_condition.culture_temp.temp.")
+keep = setdiff(names(df_transformed), rm)
+df_transformed = df_transformed[,keep]
+
+df = df_transformed
+#Start the clock
+ptm<-proc.time()
+
+permutedAUC<-c()
+
+word = "Firmicutes"
+best.iter.list = c()
+
+out = NULL
+i=1
+while (i <= 50) {
+  # for permutation loop
+  ## random permutation of Label
+  # randomLabel<-sample(df$case)
+  
+  # pan2<-cbind(randomLabel,df)
+  # #remove previous label
+  # rm = "case"
+  # keep = setdiff(names(pan2),rm)
+  # pan2 = pan2[,keep]
+  
+  # pan2[,1]<-sapply(pan2[,1],as.character)
+  
+  ## create training and test sets
+  pan2 = df
+  intrain2<-createDataPartition(y=pan2$X.application_interaction.risk_assessment.pathogenicity_human.,
+                                p=0.8,
+                                list=FALSE)
+  
+  test2<-pan2[-intrain2,]
+
+  training2<-pan2[intrain2,]
+  n_cols = dim(training2)[2]
+  check<-1-is.na(training2)*1
+  checksum<-apply(check,2,sum)
+  if(length(which(checksum>=2))==n_cols){#this makes sure we don't get any columns with all zeros. Should be == to the number of columns
+    
+    y_col = which(names(training2)=="X.application_interaction.risk_assessment.pathogenicity_human.")
+    x_col = seq(1:dim(training2)[2])
+    x_col = setdiff(x_col, y_col)
+
+    model<-as.formula(paste(colnames(pan2)[y_col], "~",
+                            paste(colnames(pan2)[x_col],collapse = "+"),
+                            sep = ""))
+    
+    gbm2<- gbm(model,
+               data=training2, 
+               distribution="bernoulli",
+               n.trees=40000,
+               shrinkage=0.001,
+               interaction.depth=3,
+               bag.fraction=0.50,
+               train.fraction=1,
+               n.minobsinnode=3,
+               cv.folds=10,
+               keep.data=TRUE)
+    
+      #save this gmb model
+        list_save <- c(list_save, list(gbm2))
+
+    #get the relative influence info
+    x = summary(gbm2)
+    x.df= data.frame(variable = x$var,
+                     relative.influence = x$rel.inf)
+    
+    # x.df = subset(x.df, relative.influence >=1)
+    
+    x.df$variable = factor(x.df$variable, levels = x.df$variable[order(x.df$relative.influence)])
+    #save these results
+    out =  rbind(out, x.df)
+    
+    
+    #check performance using 5-fold cross-validation
+    best.iter2 <- gbm.perf(gbm2,method="cv",plot.it=FALSE) #OOB method under predicts
+    #   batsum2<-summary.gbm(gbm2,n.trees=best.iter,method=relative.influence,plotit=FALSE)
+    best.iter.list=c(best.iter.list, best.iter2)
+
+        ## LABEL
+    ## predictions on the TRAINING SET
+    output2<-predict(gbm2, newdata=training2, n.trees=best.iter2, type="response") 
+    output2<-cbind(output2,as.numeric(training2$X.application_interaction.risk_assessment.pathogenicity_human.))
+    
+    # # training AUC for Bernoulli distributed responses
+    auc2=colAUC(output2[,1],output2[,2])
+    
+    # Predictions on the TEST set
+    output.test2<-predict(gbm2, newdata=test2, n.trees=best.iter2, type="response") 
+    output.test2<-cbind(output.test2,as.numeric(test2$X.application_interaction.risk_assessment.pathogenicity_human.))
+    # colnames(output.test2)<-c("output","label")
+    # output.test2<-output.test2[order(-output.test2[,1]),]
+    # plot(output.test)
+    
+    ## test AUC for Bernoulli distributed responses
+    auctest2=colAUC(output.test2[,1],output.test2[,2])
+    
+    permutedAUC[i]<-auctest2
+    print(auctest2)
+    i=i+1
+    print(i)#check where we are in bootstrap
+  } else i=i
+}
+
+sum(is.na(permutedAUC)*1) #how many NAs
+permutedAUC2<-na.omit(permutedAUC)
+mean(permutedAUC2)
+sd(permutedAUC2)
+
+#Stop the clock
+(proc.time()-ptm)/60
+
+write.csv(best.iter.list, file = paste0("best.iter.list.","observed.", word, ".csv"))
+    
+#summarize the relative influence data
+out_sum <- out %>% 
+  group_by(variable) %>%
+  summarize(mean_influence = mean(relative.influence)) %>%
+  filter(mean_influence>1)
+
+#get just the data for variables with mean influence greater than 1%
+out_high = subset(out, variable %in% out_sum$variable)
+
+save(out_high, file = "out_high.Rdata")
+ggplot(data = out_high, aes(x = variable, y =relative.influence))+
+  ylab("relative influence (%)")+
+  xlab("variable")+
+  geom_boxplot()+
+  coord_flip()
+
+ggsave("Figure.relative.influence.boxplot.Firmicutes.jpg")
+
+save(list_save, file = "list_save_cases.Rdata")
+
+```
+
+
+
+#histogram of cell length
+```{r hist_cell_length}
+
+# plot<- ggplot()+
+#   geom_histogram(data = Train, aes(x =log(X.morphology_physiology.cell_morphology.cell_len.) ))
+# plot
+# 
+# plot<- ggplot()+
+#   geom_histogram(data = Train, aes(x =log(X.morphology_physiology.cell_morphology.cell_width.) ))
+# plot
+# 
+# 
+# plot<- ggplot()+
+#   geom_histogram(data = Train, aes(x =log(X.morphology_physiology.cell_morphology.cell_width.) ))
+# plot
+
+
+
+
+```
+
+
+
+###make graph of temperature_range in relation to pathogenicity
+```{r}
+load("q_Firmicutes.Rdata")
+plot <- ggplot(data = q_Firmicutes, aes(x = `culture_growth_condition culture_temp temperature_range`,
+                   y = `application_interaction risk_assessment pathogenicity_human` ))+
+  geom_bar(stat="identity")
+plot
+
+table(q_Firmicutes$`application_interaction risk_assessment pathogenicity_human`,
+      q_Firmicutes$`culture_growth_condition culture_temp temperature_range`)
+
+q_sum <- q_Firmicutes %>%
+  group_by(`culture_growth_condition culture_temp temperature_range`) %>%
+  summarise(n = length(`application_interaction risk_assessment pathogenicity_human`),
+            n_pathogen = length(which(`application_interaction risk_assessment pathogenicity_human`==1)),
+            frac_pathogen = n_pathogen/n)
+
+plot <- ggplot(data = q_sum, 
+               aes(x = `culture_growth_condition culture_temp temperature_range`,
+                   y = frac_pathogen))+
+               # aes(y = frac_pathogen))+
+      geom_col()
+
+plot
+
+
+```
+
+
+###make graph of temperature_range in relation to GC content
+```{r}
+load("q_Firmicutes.Rdata")
+plot <- ggplot(data = q_Firmicutes, aes(x = `culture_growth_condition culture_temp temperature_range`,
+                   y = `application_interaction risk_assessment pathogenicity_human`))+
+  geom_bar(stat="identity")
+plot
+
+
+
+```
+
+
+
+
+###get data for well-covered fields for one phylum, Fusobacteria
+###oxygen tol: no variation, murein types, lat, long, animal pathogenicity, 
+#there are only 47 Fuso, so exclude this one. 
+```{r FUso}
+load("Data from Backdive-2.RData")
+threshold = 0.01
+D = merge
+D = unique(D)
+#rm(merge)
+#remove NA values
+inds.na = which(!is.na(D$value))
+D = D[inds.na,]
+
+D_phylum = subset(D, field == "phylum")
+D_sub = subset(D_phylum, value == "Fusobacteria")
+
+id_len=length(unique(D_sub$bacdive_id))
+
+bacdive_tmp = D_sub$bacdive_id
+
+D_sub_all = subset(D, bacdive_id %in% bacdive_tmp)#get all in this phylum based on bacdive_ids
+
+D = D_sub_all
+D$new_field = paste(D$section, D$subsection, D$field)
+save(D, file = "DATA/PROCESSED/D_Fusobacteria.Rdata")
+count=as.data.frame(table(D$new_field))#combination of subsection and field
+var1=count$Var1
+freq=count$Freq
+var<-list()
+freqs<-list()
+for (i in 1:length(freq)) {
+  if (freq[i]>=threshold*id_len) {#this will get fields greater than 1%
+    var[[i]]=var1[i]
+    freqs[[i]]=freq[i]
+  }
+}
+
+df=do.call(rbind, Map(data.frame, Feature_name=var, Frequency=freqs))
+
+df$Fraction = df$Frequency/id_len
+
+###get those seen at least 1% of time
+df01 = subset(df, Fraction >= 0.01)
+save(df01, file = "DATA/PROCESSED/df01_Fusobacteria.Rdata")
+
+merge01 = subset(D, new_field %in% df01$Feature_name)
+save(merge01, file = "DATA/PROCESSED/merge01_Fusobacteria.Rdata")
+
+##this part is data_processing.R @
+df <- merge01
+
+df <- unique(df)
+
+df$feature_name <- paste(df$section, df$subsection, df$field)
+
+a <- df[is.element(df$feature_name, df01$Feature_name),]#df01 for 1% threshold
+
+q <- dcast(a, bacdive_id~feature_name)
+q <- q[order(q$bacdive_id),]
+
+write.csv(q, file = "df_Fusobacteria.csv", row.names = F)
+temp = read.csv("df_Fusobacteria.csv")
+dim(temp)
+# remove columns with near zero variance Global. Not doing this because it removes interesting variables like pathogenicity.animal
+# nzv <- nearZeroVar(q,saveMetrics=TRUE,freqCut = 99/1)
+# nzv <- row.names(nzv[which(nzv$nzv==TRUE),])
+# dropnzv<-names(q[ , which(names(q) %in% nzv)])
+# write.csv(dropnzv, file = "dropped-Fuso.csv")
+# q <- q[ , -which(names(q) %in% nzv)]
+# write.csv(q, file = "dropnzvdata_Fusobacteria.csv", row.names = F)
+# 
+# #######
+# q <- read.csv(file = "dropnzvdata_Fusobacteria.csv")
+dim(q)
+str(q)
+
+str(q, list.len=ncol(q))
+write.csv(names(q), file = "Fusobacteria.names.csv")
+
+q$`molecular_biology GC_content GC_content`=as.character(q$`molecular_biology GC_content GC_content`)
+
+na_temp_range = which(is.na(q$`culture_growth_condition culture_temp temperature_range`))
+q$`culture_growth_condition culture_temp temperature_range`[na_temp_range]=
+  q$`culture_growth_condition culture_temp temperature_range1`[na_temp_range]
+
+q$`molecular_biology GC_content GC_content`= as.character(q$`molecular_biology GC_content GC_content`)
+
+#fix GC content
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$`molecular_biology GC_content GC_content`[a])){
+    if (grepl("±", q$`molecular_biology GC_content GC_content`[a])==TRUE){
+      split = strsplit(q$`molecular_biology GC_content GC_content`[a], "±")
+      q$`molecular_biology GC_content GC_content`[a] =as.numeric(split[[1]][1])
+    }
+    length_char = str_length(q$`molecular_biology GC_content GC_content`[a])
+    if (length_char > 4){
+      split = strsplit(q$`molecular_biology GC_content GC_content`[a], "-")
+      q$`molecular_biology GC_content GC_content`[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+    
+  }
+}
+
+#fix morphology_physiology cell_morphology cell_len
+q$`morphology_physiology cell_morphology cell_len`=as.character(q$`morphology_physiology cell_morphology cell_len`)
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$`morphology_physiology cell_morphology cell_len`[a])){
+    q$`morphology_physiology cell_morphology cell_len`[a]=str_replace(q$`morphology_physiology cell_morphology cell_len`[a],
+                                                                      pattern = ">",
+                                                                      replacement = "")
+    q$`morphology_physiology cell_morphology cell_len`[a]=str_replace(q$`morphology_physiology cell_morphology cell_len`[a],
+                                                                      pattern = "<",
+                                                                      replacement = "")
+    grep_test = grepl("-", q$`morphology_physiology cell_morphology cell_len`[a])
+    if (grep_test == TRUE){
+      split = strsplit(q$`morphology_physiology cell_morphology cell_len`[a], "-")
+      q$`morphology_physiology cell_morphology cell_len`[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+  }
+}
+q$`morphology_physiology cell_morphology cell_len`=as.numeric(q$`morphology_physiology cell_morphology cell_len`)
+inds = which(q$`morphology_physiology cell_morphology cell_len_unit` == "mm")
+q$`morphology_physiology cell_morphology cell_len`[inds]=q$`morphology_physiology cell_morphology cell_len`[inds]*1000
+
+##now change into log
+q$`morphology_physiology cell_morphology cell_len log`=log(q$`morphology_physiology cell_morphology cell_len`)
+rm = c("morphology_physiology cell_morphology cell_len")
+keep = setdiff(names(q), rm)
+q = q[,keep]
+
+#fix morphology_physiology cell_morphology cell_width
+q$`morphology_physiology cell_morphology cell_width`=as.character(q$`morphology_physiology cell_morphology cell_width`)
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$`morphology_physiology cell_morphology cell_width`[a])){
+    q$`morphology_physiology cell_morphology cell_width`[a]=str_replace(q$`morphology_physiology cell_morphology cell_width`[a],
+                                                                        pattern = ">",
+                                                                        replacement = "")
+    q$`morphology_physiology cell_morphology cell_width`[a]=str_replace(q$`morphology_physiology cell_morphology cell_width`[a],
+                                                                        pattern = "<",
+                                                                        replacement = "")
+    grep_test = grepl("-", q$`morphology_physiology cell_morphology cell_width`[a])
+    if (grep_test == TRUE){
+      split = strsplit(q$`morphology_physiology cell_morphology cell_width`[a], "-")
+      q$`morphology_physiology cell_morphology cell_width`[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+  }
+}
+q$`morphology_physiology cell_morphology cell_width`=as.numeric(q$`morphology_physiology cell_morphology cell_width`)
+inds = which(q$`morphology_physiology cell_morphology cell_width_unit` == "mm")
+q$`morphology_physiology cell_morphology cell_width`[inds] = 1000*q$`morphology_physiology cell_morphology cell_width`[inds]
+
+##now change into log
+q$`morphology_physiology cell_morphology cell_width log`=log(q$`morphology_physiology cell_morphology cell_width`)
+rm = c("morphology_physiology cell_morphology cell_width")
+keep = setdiff(names(q), rm)
+q = q[,keep]
+
+#unique(q$morphology_physiology colony_morphology incubation_period)
+q$`morphology_physiology colony_morphology incubation_period`=as.character(q$`morphology_physiology colony_morphology incubation_period`)
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$`morphology_physiology colony_morphology incubation_period`[a])){
+    q$`morphology_physiology colony_morphology incubation_period`[a]=str_replace(q$`morphology_physiology colony_morphology incubation_period`[a],
+                                                                                 pattern = ">",
+                                                                                 replacement = "")
+    q$`morphology_physiology colony_morphology incubation_period`[a]=str_replace(q$`morphology_physiology colony_morphology incubation_period`[a],
+                                                                                 pattern = "<",
+                                                                                 replacement = "")
+    
+    q$`morphology_physiology colony_morphology incubation_period`[a]=str_replace(q$`morphology_physiology colony_morphology incubation_period`[a],
+                                                                                 pattern = "days",
+                                                                                 replacement = "")
+    
+    grep_test = grepl("-", q$`morphology_physiology colony_morphology incubation_period`[a])
+    if (grep_test == TRUE){
+      split = strsplit(q$`morphology_physiology colony_morphology incubation_period`[a], "-")
+      q$`morphology_physiology colony_morphology incubation_period`[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+  }
+}
+q$`morphology_physiology colony_morphology incubation_period`=as.numeric(q$`morphology_physiology colony_morphology incubation_period`)
+
+
+q$`molecular_biology GC_content GC_content`= as.numeric(q$`molecular_biology GC_content GC_content`)
+
+keep = c(
+  #"application_interaction risk_assessment biosafety_level",
+  "molecular_biology GC_content GC_content",
+  #"taxonomy_name strains_tax_PNU species",
+  "culture_growth_condition culture_temp temperature_range",
+  # "environment_sampling_isolation_source origin continent",#hard to interpret biologically
+  # "taxonomy_name strains_tax_PNU phylum",
+  "environment_sampling_isolation_source origin latitude",
+  "environment_sampling_isolation_source origin longitude",
+  "morphology_physiology spore_formation type",
+  # "morphology_physiology oxygen_tolerance oxygen_tol",#this has multiple entries, tol1, tol2. 
+  #"morphology_physiology met_test metabolite_test",#don't know what this means
+  #"morphology_physiology met_production metabolite_prod",#don't know what this means
+  #"morphology_physiology met_antibiotica metabolite_antib",#don't know what this means
+  #"morphology_physiology halophily salt_concentration",#FIXED to make numeric  Includes >, <  This is relative to multiple possible measures -- growth, optimum  discard  
+  #"morphology_physiology met_antibiotica ab_resistance_conc",#don't know what this means  Seems to refer to concentration of antibiotic in test  Exclude  
+  "morphology_physiology colony_morphology colony_len",#FIXED to make numeric  Includes >, <
+  # "morphology_physiology colony_morphology hemolysis_type",#don't know what this means. doesn't seem to exist for Fusobacteria
+  "morphology_physiology cell_morphology motility",#factor
+  "morphology_physiology cell_morphology gram_stain",#factor
+  "morphology_physiology cell_morphology flagellum_arrangement",#factor; does not seem to be present for Fusobacteria
+  "morphology_physiology cell_morphology cell_len log",#FIXED to make numeric  assumning all in same units
+  "morphology_physiology cell_morphology cell_shape",#factor
+  "morphology_physiology cell_morphology cell_width log",#need to FIX to make numeric 
+  # "culture_growth_condition culture_temp temp",#need to FIX to make numeric; refers to growth vs  optimum; exclude
+  # "culture_growth_condition culture_pH pH",
+  "morphology_physiology spore_formation ability",
+  #"taxonomy_name strains ordo",
+  "application_interaction risk_assessment pathogenicity_animal",
+  "application_interaction risk_assessment pathogenicity_human",
+  "bacdive_id",
+  "environment_sampling_isolation_source origin sample_type",
+  "morphology_physiology cell_morphology gram_stain",
+  "taxonomy_name strains_tax_PNU class",
+  "morphology_physiology spore_formation type",
+  "morphology_physiology colony_morphology colony_shape")
+keep = intersect(names(q), keep)
+q = q[,keep]
+
+# q$`environment_sampling_isolation_source origin longitude`=as.numeric(as.character(q$`environment_sampling_isolation_source origin longitude`))
+
+# q$`environment_sampling_isolation_source origin latitude`=as.numeric(as.character(q$`environment_sampling_isolation_source origin latitude`))
+
+# q$`morphology_physiology colony_morphology colony_len`=as.numeric(as.character(q$`morphology_physiology colony_morphology colony_len`))
+save(q, file = "q_Fusobacteria Rdata")
+load("q_Fusobacteria Rdata")
+bacteria_traits_fields_subset = q
+write.csv(bacteria_traits_fields_subset, file = "bacteria_traits_fields_subset_Fusobacteria.csv", 
+          row.names = FALSE)
+#fix animal pathogenic -- confirmed not here. 
+# inds = which(!is.na(q$`application_interaction risk_assessment pathogenicity_animal`))
+# q$`application_interaction risk_assessment pathogenicity_animal`[inds]="1"
+# 
+# inds.na = which(is.na(q$`application_interaction risk_assessment pathogenicity_animal`))
+# q$`application_interaction risk_assessment pathogenicity_animal`[inds.na]="0"
+# q$`application_interaction risk_assessment pathogenicity_animal`=as.numeric(q$`application_interaction risk_assessment pathogenicity_animal`)
+
+# q$`application_interaction risk_assessment pathogenicity_animal`[is.na(q$`application_interaction risk_assessment pathogenicity_animal`)]=0
+# q$`application_interaction risk_assessment pathogenicity_animal`[!is.na(q$`application_interaction risk_assessment pathogenicity_animal`)]=1
+
+#fix human pathogenic
+inds = which(!is.na(q$`application_interaction risk_assessment pathogenicity_human`))
+q$`application_interaction risk_assessment pathogenicity_human`[inds]="1"
+
+inds.na = which(is.na(q$`application_interaction risk_assessment pathogenicity_human`))
+q$`application_interaction risk_assessment pathogenicity_human`[inds.na]="0"
+q$`application_interaction risk_assessment pathogenicity_human`=as.numeric(q$`application_interaction risk_assessment pathogenicity_human`)
+
+# q$`application_interaction risk_assessment pathogenicity_human`[is.na(q$`application_interaction risk_assessment pathogenicity_human`)]=0
+# q$`application_interaction risk_assessment pathogenicity_human`[!is.na(q$`application_interaction risk_assessment pathogenicity_human`)]=1
+summary(q$`application_interaction risk_assessment pathogenicity_human`)
+q$human_origin = grepl("human", q$`environment_sampling_isolation_source origin sample_type`)
+q$human_origin[q$human_origin==FALSE]=0
+q$human_origin[q$human_origin==TRUE]=1
+rm = c("bacdive_id",
+       "taxonomy_name strains_tax_PNU species",
+       "environment_sampling_isolation_source origin sample_type")
+keep = setdiff(names(q), rm)
+q = q[,keep]
+
+# q$`application_interaction risk_assessment biosafety_level`=factor(q$`application_interaction risk_assessment biosafety_level`)
+q$`application_interaction risk_assessment pathogenicity_animal`=as.numeric(q$`application_interaction risk_assessment pathogenicity_animal`)
+q$`culture_growth_condition culture_temp temp`=as.numeric(q$`culture_growth_condition culture_temp temp`)
+# q$`environment_sampling_isolation_source origin continent`=factor(q$`environment_sampling_isolation_source origin continent`)
+q$`morphology_physiology cell_morphology cell_shape`=factor(q$`morphology_physiology cell_morphology cell_shape`)
+q$`morphology_physiology cell_morphology gram_stain`=factor(q$`morphology_physiology cell_morphology gram_stain`)
+q$`morphology_physiology cell_morphology motility`=factor(q$`morphology_physiology cell_morphology motility`)
+# q$`morphology_physiology oxygen_tolerance oxygen_tol`=factor(q$`morphology_physiology oxygen_tolerance oxygen_tol`)
+q$`morphology_physiology spore_formation ability`=factor(q$`morphology_physiology spore_formation ability`)
+#q$`taxonomy_name strains ordo`=factor(q$`taxonomy_name strains ordo`)
+
+#remove fields with no variation, all NA
+rm = c("application_interaction risk_assessment pathogenicity_animal",
+       "culture_growth_condition culture_temp temp")
+
+# q_Fusobacteria = q
+# save(q_Fusobacteria, file = "q_Fusobacteria.Rdata")
+# dmy <- dummyVars(" ~ .", data = q,fullRank = F, sep=".")
+# 
+# df_transformed <- data.frame(predict(dmy, newdata = q))
+# save(df_transformed, file = "df_transformed_Fusobacteria.Rdata")
+# write.csv(df_transformed, file = "onehotdata_Fusobacteria.csv", row.names = F)
+
+
+```
+
+
+##make model
+```{r}
+load("df_transformed.Rdata")
+
+rm = "X.culture_growth_condition.culture_temp.temp."
+keep = setdiff(names(df_transformed), rm)
+df_transformed = df_transformed[,keep]
+y_col = 2
+x_col = c(1, 3:dim(df_transformed)[2])
+
+model<-as.formula(paste(colnames(df_transformed)[y_col], "~",
+                        paste(colnames(df_transformed)[x_col],collapse = "+"),
+                        sep = ""))
+
+
+```
+
+###get data for well-covered fields for one phylum, Proteobacteria
+#add pathogenicity plant, colony color, 
+```{r proteo}
+#load("DATA/PROCESSED/Data from Backdive-2.RData")
+load("Data from Backdive-2.RData")
+
+threshold = 0.01
+D = merge
+D = unique(D)
+#rm(merge)
+#remove NA values
+inds.na = which(!is.na(D$value))
+D = D[inds.na,]
+
+D_phylum = subset(D, field == "phylum")
+D_sub = subset(D_phylum, value == "Proteobacteria")
+
+id_len=length(unique(D_sub$bacdive_id))
+
+bacdive_tmp = D_sub$bacdive_id
+
+D_sub_all = subset(D, bacdive_id %in% bacdive_tmp)#get all in this phylum based on bacdive_ids
+
+D = D_sub_all
+D$new_field = paste(D$section, D$subsection, D$field)
+save(D, file = "DATA/PROCESSED/D_Proteobacteria.Rdata")
+count=as.data.frame(table(D$new_field))#combination of subsection and field
+var1=count$Var1
+freq=count$Freq
+var<-list()
+freqs<-list()
+for (i in 1:length(freq)) {
+  if (freq[i]>=threshold*id_len) {#this will get fields greater than 1%
+    var[[i]]=var1[i]
+    freqs[[i]]=freq[i]
+  }
+}
+
+df=do.call(rbind, Map(data.frame, Feature_name=var, Frequency=freqs))
+
+df$Fraction = df$Frequency/id_len
+
+###get those seen at least 1% of time
+df01 = subset(df, Fraction >= 0.01)
+save(df01, file = "DATA/PROCESSED/df01_Proteobacteria.Rdata")
+
+merge01 = subset(D, new_field %in% df01$Feature_name)
+save(merge01, file = "DATA/PROCESSED/merge01_Proteobacteria.Rdata")
+
+##this part is data_processing.R @
+df <- merge01
+
+df <- unique(df)
+
+df$feature_name <- paste(df$section, df$subsection, df$field)
+
+a <- df[is.element(df$feature_name, df01$Feature_name),]#df01 for 1% threshold
+
+q <- dcast(a, bacdive_id~feature_name)
+q <- q[order(q$bacdive_id),]
+
+write.csv(q, file = "df_Proteobacteria.csv", row.names = F)
+temp = read.csv("df_Proteobacteria.csv")
+dim(temp)
+# remove columns with near zero variance Global. Not doing this because it removes interesting variables like pathogenicity.animal
+# nzv <- nearZeroVar(q,saveMetrics=TRUE,freqCut = 99/1)
+# nzv <- row.names(nzv[which(nzv$nzv==TRUE),])
+# dropnzv<-names(q[ , which(names(q) %in% nzv)])
+# q <- q[ , -which(names(q) %in% nzv)]
+# write.csv(q, file = "dropnzvdata_Proteobacteria.csv", row.names = F)
+# 
+# #######
+# q <- read.csv(file = "dropnzvdata_Proteobacteria.csv")
+dim(q)
+#str(q)
+
+#str(q, list.len=ncol(q))
+
+write.csv(names(q), "Proteobacteria_names.csv")
+q$`molecular_biology GC_content GC_content`=as.character(q$`molecular_biology GC_content GC_content`)
+
+na_temp_range = which(is.na(q$`culture_growth_condition culture_temp temperature_range`))
+q$`culture_growth_condition culture_temp temperature_range`[na_temp_range]=
+  q$`culture_growth_condition culture_temp temperature_range1`[na_temp_range]
+
+q$`molecular_biology GC_content GC_content`= as.character(q$`molecular_biology GC_content GC_content`)
+
+#fix GC content
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$`molecular_biology GC_content GC_content`[a])){
+    if (grepl("±", q$`molecular_biology GC_content GC_content`[a])==TRUE){
+      split = strsplit(q$`molecular_biology GC_content GC_content`[a], "±")
+      q$`molecular_biology GC_content GC_content`[a] =as.numeric(split[[1]][1])
+    }
+    length_char = str_length(q$`molecular_biology GC_content GC_content`[a])
+    if (length_char > 4){
+      split = strsplit(q$`molecular_biology GC_content GC_content`[a], "-")
+      q$`molecular_biology GC_content GC_content`[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+    
+  }
+}
+
+#fix morphology_physiology cell_morphology cell_len
+q$`morphology_physiology cell_morphology cell_len`=as.character(q$`morphology_physiology cell_morphology cell_len`)
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$`morphology_physiology cell_morphology cell_len`[a])){
+    q$`morphology_physiology cell_morphology cell_len`[a]=str_replace(q$`morphology_physiology cell_morphology cell_len`[a],
+                                                                      pattern = ">",
+                                                                      replacement = "")
+    q$`morphology_physiology cell_morphology cell_len`[a]=str_replace(q$`morphology_physiology cell_morphology cell_len`[a],
+                                                                      pattern = "<",
+                                                                      replacement = "")
+    grep_test = grepl("-", q$`morphology_physiology cell_morphology cell_len`[a])
+    if (grep_test == TRUE){
+      split = strsplit(q$`morphology_physiology cell_morphology cell_len`[a], "-")
+      q$`morphology_physiology cell_morphology cell_len`[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+  }
+}
+q$`morphology_physiology cell_morphology cell_len`=as.numeric(q$`morphology_physiology cell_morphology cell_len`)
+inds = which(q$`morphology_physiology cell_morphology cell_len_unit` == "mm")
+q$`morphology_physiology cell_morphology cell_len`[inds]=q$`morphology_physiology cell_morphology cell_len`[inds]*1000
+
+##now change into log
+q$`morphology_physiology cell_morphology cell_len log`=log(q$`morphology_physiology cell_morphology cell_len`)
+rm = c("morphology_physiology cell_morphology cell_len")
+keep = setdiff(names(q), rm)
+q = q[,keep]
+
+#fix morphology_physiology cell_morphology cell_width
+q$`morphology_physiology cell_morphology cell_width`=as.character(q$`morphology_physiology cell_morphology cell_width`)
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$`morphology_physiology cell_morphology cell_width`[a])){
+    q$`morphology_physiology cell_morphology cell_width`[a]=str_replace(q$`morphology_physiology cell_morphology cell_width`[a],
+                                                                        pattern = ">",
+                                                                        replacement = "")
+    q$`morphology_physiology cell_morphology cell_width`[a]=str_replace(q$`morphology_physiology cell_morphology cell_width`[a],
+                                                                        pattern = "<",
+                                                                        replacement = "")
+    grep_test = grepl("-", q$`morphology_physiology cell_morphology cell_width`[a])
+    if (grep_test == TRUE){
+      split = strsplit(q$`morphology_physiology cell_morphology cell_width`[a], "-")
+      q$`morphology_physiology cell_morphology cell_width`[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+  }
+}
+q$`morphology_physiology cell_morphology cell_width`=as.numeric(q$`morphology_physiology cell_morphology cell_width`)
+inds = which(q$`morphology_physiology cell_morphology cell_width_unit` == "mm")
+q$`morphology_physiology cell_morphology cell_width`[inds] = 1000*q$`morphology_physiology cell_morphology cell_width`[inds]
+
+##now change into log
+q$`morphology_physiology cell_morphology cell_width log`=log(q$`morphology_physiology cell_morphology cell_width`)
+rm = c("morphology_physiology cell_morphology cell_width")
+keep = setdiff(names(q), rm)
+q = q[,keep]
+
+#unique(q$morphology_physiology colony_morphology incubation_period)
+q$`morphology_physiology colony_morphology incubation_period`=as.character(q$`morphology_physiology colony_morphology incubation_period`)
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$`morphology_physiology colony_morphology incubation_period`[a])){
+    q$`morphology_physiology colony_morphology incubation_period`[a]=str_replace(q$`morphology_physiology colony_morphology incubation_period`[a],
+                                                                                 pattern = ">",
+                                                                                 replacement = "")
+    q$`morphology_physiology colony_morphology incubation_period`[a]=str_replace(q$`morphology_physiology colony_morphology incubation_period`[a],
+                                                                                 pattern = "<",
+                                                                                 replacement = "")
+    
+    q$`morphology_physiology colony_morphology incubation_period`[a]=str_replace(q$`morphology_physiology colony_morphology incubation_period`[a],
+                                                                                 pattern = "days",
+                                                                                 replacement = "")
+    
+    grep_test = grepl("-", q$`morphology_physiology colony_morphology incubation_period`[a])
+    if (grep_test == TRUE){
+      split = strsplit(q$`morphology_physiology colony_morphology incubation_period`[a], "-")
+      q$`morphology_physiology colony_morphology incubation_period`[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+  }
+}
+q$`morphology_physiology colony_morphology incubation_period`=as.numeric(q$`morphology_physiology colony_morphology incubation_period`)
+
+
+q$`molecular_biology GC_content GC_content`= as.numeric(q$`molecular_biology GC_content GC_content`)
+
+keep = c(
+  #"application_interaction risk_assessment biosafety_level",
+  "molecular_biology GC_content GC_content",
+  "taxonomy_name strains_tax_PNU species",
+  "culture_growth_condition culture_temp temperature_range",
+  # "environment_sampling_isolation_source origin continent",#hard to interpret biologically
+  # "taxonomy_name strains_tax_PNU phylum",
+  "environment_sampling_isolation_source origin latitude",
+  "environment_sampling_isolation_source origin longitude",
+  "morphology_physiology spore_formation type",
+  # "morphology_physiology oxygen_tolerance oxygen_tol",#this has multiple entries, tol1, tol2. 
+  #"morphology_physiology met_test metabolite_test",#don't know what this means
+  #"morphology_physiology met_production metabolite_prod",#don't know what this means
+  #"morphology_physiology met_antibiotica metabolite_antib",#don't know what this means
+  #"morphology_physiology halophily salt_concentration",#FIXED to make numeric  Includes >, <  This is relative to multiple possible measures -- growth, optimum  discard  
+  #"morphology_physiology met_antibiotica ab_resistance_conc",#don't know what this means  Seems to refer to concentration of antibiotic in test  Exclude  
+  "morphology_physiology colony_morphology colony_len",#FIXED to make numeric  Includes >, <
+  "morphology_physiology colony_morphology hemolysis_type",#don't know what this means. 
+  "morphology_physiology cell_morphology motility",#factor
+  "morphology_physiology cell_morphology gram_stain",#factor
+  "morphology_physiology cell_morphology flagellum_arrangement",#factor; does not seem to be present for Proteobacteria
+  "morphology_physiology cell_morphology cell_len log",#FIXED to make numeric  assumning all in same units
+  "morphology_physiology cell_morphology cell_shape",#factor
+  "morphology_physiology cell_morphology cell_width log",#need to FIX to make numeric 
+  # "culture_growth_condition culture_temp temp",#need to FIX to make numeric; refers to growth vs  optimum; exclude
+  # "culture_growth_condition culture_pH pH",
+  "morphology_physiology spore_formation ability",
+  "taxonomy_name strains ordo",
+  "application_interaction risk_assessment pathogenicity_animal",
+    "application_interaction risk_assessment pathogenicity_plant",
+  "application_interaction risk_assessment pathogenicity_human",
+  "bacdive_id",
+  "environment_sampling_isolation_source origin sample_type",
+  "morphology_physiology cell_morphology gram_stain",
+  "taxonomy_name strains_tax_PNU class",
+  "morphology_physiology spore_formation type",
+  "morphology_physiology colony_morphology colony_shape")
+keep = intersect(names(q), keep)
+q = q[,keep]
+
+q$`environment_sampling_isolation_source origin longitude`=as.numeric(as.character(q$`environment_sampling_isolation_source origin longitude`))
+
+q$`environment_sampling_isolation_source origin latitude`=as.numeric(as.character(q$`environment_sampling_isolation_source origin latitude`))
+
+q$`morphology_physiology colony_morphology colony_len`=as.numeric(as.character(q$`morphology_physiology colony_morphology colony_len`))
+save(q, file = "q_Proteobacteria Rdata")
+load("q_Proteobacteria Rdata")
+bacteria_traits_fields_subset = q
+write.csv(bacteria_traits_fields_subset, file = "bacteria_traits_fields_subset_Proteobacteria.csv", 
+          row.names = FALSE)
+#fix animal pathogenic
+inds = which(!is.na(q$`application_interaction risk_assessment pathogenicity_animal`))
+q$`application_interaction risk_assessment pathogenicity_animal`[inds]="1"
+
+inds.na = which(is.na(q$`application_interaction risk_assessment pathogenicity_animal`))
+q$`application_interaction risk_assessment pathogenicity_animal`[inds.na]="0"
+q$`application_interaction risk_assessment pathogenicity_animal`=as.numeric(q$`application_interaction risk_assessment pathogenicity_animal`)
+
+# q$`application_interaction risk_assessment pathogenicity_animal`[is.na(q$`application_interaction risk_assessment pathogenicity_animal`)]=0
+# q$`application_interaction risk_assessment pathogenicity_animal`[!is.na(q$`application_interaction risk_assessment pathogenicity_animal`)]=1
+
+#fix human pathogenic
+inds = which(!is.na(q$`application_interaction risk_assessment pathogenicity_human`))
+q$`application_interaction risk_assessment pathogenicity_human`[inds]="1"
+
+inds.na = which(is.na(q$`application_interaction risk_assessment pathogenicity_human`))
+q$`application_interaction risk_assessment pathogenicity_human`[inds.na]="0"
+q$`application_interaction risk_assessment pathogenicity_human`=as.numeric(q$`application_interaction risk_assessment pathogenicity_human`)
+
+
+#fix plant pathogenic
+inds = which(!is.na(q$`application_interaction risk_assessment pathogenicity_plant`))
+q$`application_interaction risk_assessment pathogenicity_plant`[inds]="1"
+
+inds.na = which(is.na(q$`application_interaction risk_assessment pathogenicity_plant`))
+q$`application_interaction risk_assessment pathogenicity_plant`[inds.na]="0"
+q$`application_interaction risk_assessment pathogenicity_plant`=as.numeric(q$`application_interaction risk_assessment pathogenicity_plant`)
+
+
+# q$`application_interaction risk_assessment pathogenicity_human`[is.na(q$`application_interaction risk_assessment pathogenicity_human`)]=0
+# q$`application_interaction risk_assessment pathogenicity_human`[!is.na(q$`application_interaction risk_assessment pathogenicity_human`)]=1
+summary(q$`application_interaction risk_assessment pathogenicity_human`)
+q$human_origin = grepl("human", q$`environment_sampling_isolation_source origin sample_type`)
+q$human_origin[q$human_origin==FALSE]=0
+q$human_origin[q$human_origin==TRUE]=1
+rm = c("bacdive_id",
+       "taxonomy_name strains_tax_PNU species",
+       "environment_sampling_isolation_source origin sample_type")
+keep = setdiff(names(q), rm)
+q = q[,keep]
+
+# q$`application_interaction risk_assessment biosafety_level`=factor(q$`application_interaction risk_assessment biosafety_level`)
+q$`application_interaction risk_assessment pathogenicity_animal`=as.numeric(q$`application_interaction risk_assessment pathogenicity_animal`)
+q$`culture_growth_condition culture_temp temp`=as.numeric(q$`culture_growth_condition culture_temp temp`)
+# q$`environment_sampling_isolation_source origin continent`=factor(q$`environment_sampling_isolation_source origin continent`)
+q$`morphology_physiology cell_morphology cell_shape`=factor(q$`morphology_physiology cell_morphology cell_shape`)
+q$`morphology_physiology cell_morphology gram_stain`=factor(q$`morphology_physiology cell_morphology gram_stain`)
+q$`morphology_physiology cell_morphology motility`=factor(q$`morphology_physiology cell_morphology motility`)
+# q$`morphology_physiology oxygen_tolerance oxygen_tol`=factor(q$`morphology_physiology oxygen_tolerance oxygen_tol`)
+q$`morphology_physiology spore_formation ability`=factor(q$`morphology_physiology spore_formation ability`)
+q$`taxonomy_name strains ordo`=factor(q$`taxonomy_name strains ordo`)
+q_Proteobacteria = q
+
+rm = c("culture_growth_condition culture_temp temp",
+       "taxonomy_name strains ordo")
+
+keep = setdiff(names(q), rm)
+q = q[,keep]
+
+q$`taxonomy_name strains_tax_PNU class` = factor(q$`taxonomy_name strains_tax_PNU class`)
+q$`morphology_physiology colony_morphology hemolysis_type` = factor(q$`morphology_physiology colony_morphology hemolysis_type`)
+q$`morphology_physiology colony_morphology colony_shape` = factor(q$`morphology_physiology colony_morphology colony_shape`)
+q$`morphology_physiology cell_morphology flagellum_arrangement` = factor(q$`morphology_physiology cell_morphology flagellum_arrangement`)
+q$`culture_growth_condition culture_temp temperature_range` = factor(q$`culture_growth_condition culture_temp temperature_range`)
+
+
+save(q_Proteobacteria, file = "q_Proteobacteria.Rdata")
+dmy <- dummyVars(" ~ .", data = q,fullRank = F, sep=".")
+
+df_transformed <- data.frame(predict(dmy, newdata = q))
+save(df_transformed, file = "df_transformed_Proteobacteria.Rdata")
+write.csv(df_transformed, file = "onehotdata_Proteobacteria.csv", row.names = F)
+
+
+```
+
+
+##make model
+```{r}
+load("df_transformed_Proteobacteria.Rdata")
+
+rm = "X.culture_growth_condition.culture_temp.temp."
+keep = setdiff(names(df_transformed), rm)
+df_transformed = df_transformed[,keep]
+y_col = 2
+x_col = c(1, 3:dim(df_transformed)[2])
+
+model<-as.formula(paste(colnames(df_transformed)[y_col], "~",
+                        paste(colnames(df_transformed)[x_col],collapse = "+"),
+                        sep = ""))
+
+
+```
+
+
+##get train and test
+```{r}
+load("df_transformed_Proteobacteria.Rdata")
+df = df_transformed
+
+DP =createDataPartition(y = df$X.application_interaction.risk_assessment.pathogenicity_human., 
+                        p = 0.8,
+                        list = FALSE)
+Train = df[DP,]
+Test = df[-DP,]
+
+save(Train, file = "Train.Rdata")
+save(Test, file = "Test.Rdata")
+
+```
+
+##fit gbm -- Proteobacteria
+```{r gbm proteobacteria}
+load("Train.Rdata")
+load("Test.Rdata")
+attach(Train)
+#Start the clock
+ptm<-proc.time()
+
+n.trees = 100000
+shrinkage = 0.001#final version should be 0.001
+cv.folds = 10#final version should be 10
+gbmtest<- gbm(model,
+              data=Train,
+              distribution="bernoulli",
+              n.trees=n.trees,
+              shrinkage=shrinkage,
+              interaction.depth=3,
+              bag.fraction=0.50,
+              train.fraction=1,
+              n.minobsinnode=5,
+              cv.folds=cv.folds,
+              keep.data=TRUE,
+              verbose=TRUE,
+              n.cores=NULL)
+
+save(gbmtest, file = "gbmtest_Proteobacteria.Rdata")
+#check performance using 5-fold cross-validation
+best.iter <- gbm.perf(gbmtest,method="cv",plot.it=FALSE) #this gives you the optimal number of trees based on cv performance, other methods will over or under predict
+print(best.iter)
+
+gbm_error = data.frame(train.error = gbmtest$train.error,
+                       trees = seq(1,n.trees))
+plot <- ggplot(gbm_error, aes(x = trees, y = train.error))+
+  geom_line()
+plot
+ggsave(filename = "deviance_human_pathogenic_Firmicutes.jpg",
+       plot = plot)
+#Stop the clock
+(proc.time()-ptm)/60
+
+load("gbmtest_Proteobacteria.Rdata")
+best.iter <- gbm.perf(gbmtest,method="cv",plot.it=FALSE) #this gives you the optimal number of trees based on cv performance, other methods 
+# output predictions on the TRAINING SET
+output<-predict(gbmtest, 
+                newdata=Train, 
+                n.trees=best.iter, 
+                type="response") 
+
+output<-cbind(output,Train$X.application_interaction.risk_assessment.pathogenicity_human.)
+colnames(output)<-c("output","data")
+rownames(output)<-rownames(Train)
+output<-output[order(-output[,1]),]
+
+# # AUC for Bernoulli distributed responses
+par(mar = c(1,1,1,1))
+auc=colAUC(output[,1],output[,2],
+           plotROC = TRUE)
+
+print(auc)
+pred<-prediction(output[,1],output[,2])
+perf<-performance(pred,"tpr","fpr")
+
+par(mar = c(1,1,1,1))
+plot(perf,colorize=TRUE,main="ROC full model")
+abline(a=0, b= 1)
+
+# output predictions on the Test SET
+output<-predict(gbmtest,
+                newdata=Test,
+                n.trees=best.iter,
+                type="response")
+
+
+output<-cbind(output,Test$X.application_interaction.risk_assessment.pathogenicity_human.)
+colnames(output)<-c("output","data")
+rownames(output)<-rownames(Test)
+output<-output[order(-output[,1]),]
+
+# # AUC for Bernoulli distributed responses
+par(mar = c(1,1,1,1))
+auc=colAUC(output[,1],output[,2],
+           plotROC = TRUE)
+
+print(auc)
+pred<-prediction(output[,1],output[,2])
+perf<-performance(pred,"tpr","fpr")
+
+par(mar = c(1,1,1,1))
+plot(perf,colorize=TRUE,main="ROC full model test data")
+abline(a=0, b= 1)
+
+
+```
+
+##Bootstrap permutations -- AUC -- Proteobacteria
+```{r}
+load("df_transformed_Proteobacteria.Rdata")
+rm = c("X.culture_growth_condition.culture_temp.temp.")
+keep = setdiff(names(df_transformed), rm)
+df_transformed= df_transformed[, keep]
+#Start the clock
+ptm<-proc.time()
+
+permutedAUC<-c()
+
+best.iter.list = c()
+word = "Proteobacteria"
+
+i=1
+while (i <= 50) {
+  # for permutation loop
+  
+  ## random permutation of Label
+  randomLabel<-sample(df_transformed$X.application_interaction.risk_assessment.pathogenicity_human.)
+  
+  pan2<-cbind(randomLabel,df_transformed)
+  #remove previous label
+  rm = "X.application_interaction.risk_assessment.pathogenicity_human."
+  keep = setdiff(names(pan2),rm)
+  pan2 = pan2[,keep]
+  
+  pan2[,1]<-sapply(pan2[,1],as.character)
+  
+  ## create training and test sets
+  intrain2<-createDataPartition(y=pan2$randomLabel,
+                                p=0.8,
+                                list=FALSE)
+  
+  test2<-pan2[-intrain2,]
+  training2<-pan2[intrain2,]
+  
+  check<-1-is.na(training2)*1
+  checksum<-apply(check,2,sum)
+  if(length(which(checksum>=2))==57){#this makes sure we don't get any columns with all zeros. Should be == to the number of columns
+    
+    
+    ## random permutation of Labels ~ traits
+    y_col = 1
+    x_col = c(2:dim(pan2)[2])
+    
+    model<-as.formula(paste(colnames(pan2)[y_col], "~",
+                            paste(colnames(pan2)[x_col],collapse = "+"),
+                            sep = ""))
+    
+    
+    # model2<-as.formula(paste(colnames(pan2)[1], "~",
+    #                          paste(traits$Predictor,collapse = "+"), #traits
+    #                          collapse="+"))
+    gbm2<- gbm(model,
+               data=training2, 
+               distribution="bernoulli",
+               n.trees=40000,
+               shrinkage=0.001,
+               interaction.depth=3,
+               bag.fraction=0.50,
+               train.fraction=1,
+               n.minobsinnode=3,
+               cv.folds=10,
+               keep.data=TRUE)
+    # verbose=TRUE)
+    
+    #check performance using 5-fold cross-validation
+    best.iter2 <- gbm.perf(gbm2,method="cv",plot.it=FALSE) #OOB method under predicts
+    #   batsum2<-summary.gbm(gbm2,n.trees=best.iter,method=relative.influence,plotit=FALSE)
+   best.iter.list=c(best.iter.list, best.iter2)
+
+    ## LABEL
+    ## predictions on the TRAINING SET
+    output2<-predict(gbm2, newdata=training2, n.trees=best.iter2, type="response") 
+    output2<-cbind(output2,as.numeric(training2$randomLabel))
+    #   colnames(output2)<-c("output","label")
+    #   output2<-output2[order(-as.numeric(output2[,1])),]
+    
+    # # training AUC for Bernoulli distributed responses
+    auc2=colAUC(output2[,1],output2[,2])
+    
+    # Predictions on the TEST set
+    output.test2<-predict(gbm2, newdata=test2, n.trees=best.iter2, type="response") 
+    output.test2<-cbind(output.test2,as.numeric(test2$randomLabel))
+    # colnames(output.test2)<-c("output","label")
+    # output.test2<-output.test2[order(-output.test2[,1]),]
+    # plot(output.test)
+    
+    ## test AUC for Bernoulli distributed responses
+    auctest2=colAUC(output.test2[,1],output.test2[,2])
+    
+    permutedAUC[i]<-auctest2
+    print(auctest2)
+    i=i+1
+    print(i)#check where we are in bootstrap
+  } else i=i
+}
+
+sum(is.na(permutedAUC)*1) #how many NAs
+permutedAUC2<-na.omit(permutedAUC)
+mean(permutedAUC2)
+sd(permutedAUC2)
+
+#Stop the clock
+(proc.time()-ptm)/60
+
+write.csv(best.iter.list, file = paste0("best.iter.list.","AUC.", word, ".csv"))
+
+```
+
+
+##Bootstrap permutations for distribution of relative influence  -- Proteobacteria
+```{r boot_relative_influence_Proteobacteria}
+#initialize list of fitted models
+list_save = list()
+
+word = "Proteobacteria"
+load("df_transformed_Proteobacteria.Rdata")
+rm = c("X.culture_growth_condition.culture_temp.temp.")
+keep = setdiff(names(df_transformed), rm)
+df_transformed = df_transformed[,keep]
+
+df = df_transformed
+
+word = "Proteobacteria"
+best.iter.list = c()
+
+#Start the clock
+ptm<-proc.time()
+
+permutedAUC<-c()
+n.trees = 40000
+best.iter.list = c()
+out = NULL
+i=1
+while (i <= 50) {
+  # for permutation loop
+  ## random permutation of Label
+  # randomLabel<-sample(df$case)
+  
+  # pan2<-cbind(randomLabel,df)
+  # #remove previous label
+  # rm = "case"
+  # keep = setdiff(names(pan2),rm)
+  # pan2 = pan2[,keep]
+  
+  # pan2[,1]<-sapply(pan2[,1],as.character)
+  
+  ## create training and test sets
+  pan2 = df
+  intrain2<-createDataPartition(y=pan2$X.application_interaction.risk_assessment.pathogenicity_human.,
+                                p=0.8,
+                                list=FALSE)
+    test2<-pan2[-intrain2,]
+
+  training2<-pan2[intrain2,]
+  
+  check<-1-is.na(training2)*1
+  checksum<-apply(check,2,sum)
+    n_cols = dim(training2)[2]
+
+  if(length(which(checksum>=2))==n_cols){#this makes sure we don't get any columns with all zeros. Should be == to the number of columns
+    
+    y_col = which(names(training2)=="X.application_interaction.risk_assessment.pathogenicity_human.")
+    x_col = seq(1:dim(training2)[2])
+    x_col = setdiff(x_col, y_col)
+
+    model<-as.formula(paste(colnames(pan2)[y_col], "~",
+                            paste(colnames(pan2)[x_col],collapse = "+"),
+                            sep = ""))
+    
+    gbm2<- gbm(model,
+               data=training2, 
+               distribution="bernoulli",
+               n.trees=40000,
+               shrinkage=0.001,
+               interaction.depth=3,
+               bag.fraction=0.50,
+               train.fraction=1,
+               n.minobsinnode=3,
+               cv.folds=10,
+               keep.data=TRUE)
+    #save this gmb model
+list_save <- c(list_save, list(gbm2))
+
+    #get the relative influence info
+    x = summary(gbm2)
+    x.df= data.frame(variable = x$var,
+                     relative.influence = x$rel.inf)
+    
+    # x.df = subset(x.df, relative.influence >=1)
+    
+    x.df$variable = factor(x.df$variable, levels = x.df$variable[order(x.df$relative.influence)])
+    #save these results
+    out =  rbind(out, x.df)
+    
+    
+    #check performance using 5-fold cross-validation
+    best.iter2 <- gbm.perf(gbm2,method="cv",plot.it=FALSE) #OOB method under predicts
+    #   batsum2<-summary.gbm(gbm2,n.trees=best.iter,method=relative.influence,plotit=FALSE)
+    print(best.iter2)
+    best.iter.list=c(best.iter.list, best.iter2)
+    ## LABEL
+    ## predictions on the TRAINING SET
+    output2<-predict(gbm2, newdata=training2, n.trees=best.iter2, type="response") 
+    output2<-cbind(output2,as.numeric(training2$X.application_interaction.risk_assessment.pathogenicity_human.))
+    
+    # # training AUC for Bernoulli distributed responses
+    auc2=colAUC(output2[,1],output2[,2])
+    
+    # Predictions on the TEST set
+    output.test2<-predict(gbm2, newdata=test2, n.trees=best.iter2, type="response") 
+    output.test2<-cbind(output.test2,as.numeric(test2$X.application_interaction.risk_assessment.pathogenicity_human.))
+    # colnames(output.test2)<-c("output","label")
+    # output.test2<-output.test2[order(-output.test2[,1]),]
+    # plot(output.test)
+    
+    ## test AUC for Bernoulli distributed responses
+    auctest2=colAUC(output.test2[,1],output.test2[,2])
+    
+    permutedAUC[i]<-auctest2
+    print(auctest2)
+    i=i+1
+    print(i)#check where we are in bootstrap
+  } else i=i
+}
+
+sum(is.na(permutedAUC)*1) #how many NAs
+permutedAUC2<-na.omit(permutedAUC)
+mean(permutedAUC2)
+sd(permutedAUC2)
+
+#Stop the clock
+(proc.time()-ptm)/60
+
+#summarize the relative influence data
+out_sum <- out %>% 
+  group_by(variable) %>%
+  summarize(mean_influence = mean(relative.influence)) %>%
+  filter(mean_influence>1)
+
+#get just the data for variables with mean influence greater than 1%
+out_high = subset(out, variable %in% out_sum$variable)
+
+save(out_high, file = "out_high.Rdata")
+ggplot(data = out_high, aes(x = variable, y =relative.influence))+
+  ylab("relative influence (%)")+
+  xlab("variable")+
+  geom_boxplot()+
+  coord_flip()
+
+ggsave("Figure.relative.influence.boxplot.Proteobacteria.jpg")
+
+
+write.csv(best.iter.list, file = paste0("best.iter.list.","observed.", word, ".csv"))
+
+#save list of fitted models
+save(list_save, file = "list_save_cases.Rdata")
+
+```
+
+
+###plot relative influence -- Proteobacteria
+```{r}
+#format relative influence for figure
+load("gbmtest_Proteobacteria.Rdata")
+x = summary(gbmtest)
+# 
+x.df= data.frame(variable = x$var,
+                 relative.influence = x$rel.inf)
+
+write.csv(x.df, file = "x.df.Proteobacteria.csv")
+x.df = subset(x.df, relative.influence>=1)#take only interesting variables
+
+x.df$variable = factor(x.df$variable, levels = x.df$variable[order(x.df$relative.influence)])
+save(x.df, file = "x.df.Rdata")
+ggplot(data = x.df, aes(x = variable, y =relative.influence))+
+  ylab("relative influence (%)")+
+  xlab("variable")+
+  geom_bar(stat="identity")+
+  coord_flip()
+# 
+ggsave("Figure.relative.influence.Proteobacteria.jpg")
+
+```
+
+###partial dependence, Proteobacteria
+##use method JP sent with adjustments 
 ```{r}
 # Create plots of marginal effects
-load("gbmtest.Rdata")
+load("gbmtest_Proteobacteria.Rdata")
 load("Train.Rdata")
 library(dplyr)
 library(ggplot2)
@@ -1110,6 +3151,43 @@ library(gridExtra)
 library(grid)
 scale = 1
 best.iter <- gbm.perf(gbmtest,method="cv",plot.it=FALSE) #this gives you the optimal number of trees based on cv performance, other methods will over or under predict
+
+
+# ### Alphaproteobacteria
+ls<-partial(gbmtest,n.trees=best.iter, "X.taxonomy_name.strains_tax_PNU.class.Alphaproteobacteria",prob=TRUE)
+
+plot1 <- ls %>%
+  select(X.taxonomy_name.strains_tax_PNU.class.Alphaproteobacteria, yhat) %>%
+  na.omit() %>%
+  ggplot() +
+  geom_line(aes(x = X.taxonomy_name.strains_tax_PNU.class.Alphaproteobacteria, y = yhat),color="red") +
+  # ylim(0.,1) +
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+plot2 <- Train %>%
+  select(X.taxonomy_name.strains_tax_PNU.class.Alphaproteobacteria) %>%
+  na.omit() %>%
+  ggplot(aes(X.taxonomy_name.strains_tax_PNU.class.Alphaproteobacteria)) +
+  geom_histogram(fill="lightblue") +
+  scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+
+  theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# 
+p1 <- add_sub(plot1," ")
+p2 <- add_sub(plot2,"Class Alphaproteobacteria",size=12)
+
+aligned <- align_plots(p1, p2, align = "v")
+alpha_class<- ggdraw()+
+  draw_plot(aligned[[2]])+
+  draw_plot(aligned[[1]],
+            scale = scale)
+
 
 ls<-partial(gbmtest,n.trees=best.iter, "X.application_interaction.risk_assessment.pathogenicity_animal.",prob=TRUE)
 
@@ -1146,7 +3224,7 @@ pls <- ggdraw()+
   draw_plot(aligned[[1]],
             scale = scale)
 
-# ###
+# ###GC content
 ls<-partial(gbmtest,n.trees=best.iter, "X.molecular_biology.GC_content.GC_content.",prob=TRUE)
 
 plot1 <- ls %>%
@@ -1182,35 +3260,15 @@ gc <- ggdraw()+
             scale = scale)
 
 
-
-# # combine plots
-grid.arrange(pls, gc, ncol=2
-             ,left = textGrob("Model output probabilities", rot = 90, vjust = 1),right = textGrob("Frequency", rot = 270, vjust = 1))
-
-```
-
-
-##use method JP sent with adjustments -- small example
-```{r}
-# Create plots of marginal effects
-load("gbmtest.Rdata")
-load("Train.Rdata")
-library(dplyr)
-library(ggplot2)
-library(cowplot)
-library(gridExtra)
-library(grid)
-scale = 1
-best.iter <- gbm.perf(gbmtest,method="cv",plot.it=FALSE) #this gives you the optimal number of trees based on cv performance, other methods will over or under predict
-
-ls<-partial(gbmtest,n.trees=best.iter, "X.application_interaction.risk_assessment.pathogenicity_animal.",prob=TRUE)
+# ### human origin
+ls<-partial(gbmtest,n.trees=best.iter, "human_origin",prob=TRUE)
 
 plot1 <- ls %>%
-  select(X.application_interaction.risk_assessment.pathogenicity_animal., yhat) %>%
+  select(human_origin, yhat) %>%
   na.omit() %>%
   ggplot() +
-  geom_line(aes(x = X.application_interaction.risk_assessment.pathogenicity_animal., y = yhat),color="red") +
-  ylim(0.,1) +
+  geom_line(aes(x = human_origin, y = yhat),color="red") +
+  # ylim(0.,1) +
   ylab(" ") +
   theme_minimal() +
   theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
@@ -1218,233 +3276,928 @@ plot1 <- ls %>%
         axis.ticks.x=element_blank())
 
 plot2 <- Train %>%
-  select(X.application_interaction.risk_assessment.pathogenicity_animal.) %>%
+  select(human_origin) %>%
   na.omit() %>%
-  ggplot(aes(X.application_interaction.risk_assessment.pathogenicity_animal.)) +
+  ggplot(aes(human_origin)) +
   geom_histogram(fill="lightblue") +
   scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
   ylab(" ") +
   theme_minimal() +
   theme(axis.title.x = element_blank())+
   theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
-
+# 
 p1 <- add_sub(plot1," ")
-p2 <- add_sub(plot2,"Pathogenicity to animal",size=12)
-
+p2 <- add_sub(plot2,"human origin",size=12)
 
 aligned <- align_plots(p1, p2, align = "v")
-pls <- ggdraw()+
+hu <- ggdraw()+
   draw_plot(aligned[[2]])+
   draw_plot(aligned[[1]],
             scale = scale)
 
 
-# # combine plots
-grid.arrange(pls, ncol=2
-             ,left = textGrob("Model output probabilities", rot = 90, vjust = 1),right = textGrob("Frequency", rot = 270, vjust = 1))
+### cell length
+ls<-partial(gbmtest,n.trees=best.iter, "X.morphology_physiology.cell_morphology.cell_len.log.",prob=TRUE)
+
+plot1 <- ls %>%
+  select(X.morphology_physiology.cell_morphology.cell_len.log., yhat) %>%
+  na.omit() %>%
+  ggplot() +
+  geom_line(aes(x = X.morphology_physiology.cell_morphology.cell_len.log., y = yhat),color="red") +
+  # ylim(0.,1) +
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+plot2 <- Train %>%
+  select(X.morphology_physiology.cell_morphology.cell_len.log.) %>%
+  na.omit() %>%
+  ggplot(aes(X.morphology_physiology.cell_morphology.cell_len.log.)) +
+  geom_histogram(fill="lightblue") +
+  scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+
+  theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+#
+p1 <- add_sub(plot1," ")
+p2 <- add_sub(plot2,"cell length",size=12)
+
+aligned <- align_plots(p1, p2, align = "v")
+cell_length <- ggdraw()+
+  draw_plot(aligned[[2]])+
+  draw_plot(aligned[[1]],
+            scale = scale)
+
+# ### Betaproteobacteria
+ls<-partial(gbmtest,n.trees=best.iter, "X.taxonomy_name.strains_tax_PNU.class.Betaproteobacteria",prob=TRUE)
+
+plot1 <- ls %>%
+  select(X.taxonomy_name.strains_tax_PNU.class.Betaproteobacteria, yhat) %>%
+  na.omit() %>%
+  ggplot() +
+  geom_line(aes(x = X.taxonomy_name.strains_tax_PNU.class.Betaproteobacteria, y = yhat),color="red") +
+  # ylim(0.,1) +
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+plot2 <- Train %>%
+  select(X.taxonomy_name.strains_tax_PNU.class.Betaproteobacteria) %>%
+  na.omit() %>%
+  ggplot(aes(X.taxonomy_name.strains_tax_PNU.class.Betaproteobacteria)) +
+  geom_histogram(fill="lightblue") +
+  scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+
+  theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# 
+p1 <- add_sub(plot1," ")
+p2 <- add_sub(plot2,"Class Betaproteobacteria",size=12)
+
+aligned <- align_plots(p1, p2, align = "v")
+beta<- ggdraw()+
+  draw_plot(aligned[[2]])+
+  draw_plot(aligned[[1]],
+            scale = scale)
+
+# ### Gammaproteobacteria
+ls<-partial(gbmtest,n.trees=best.iter, "X.taxonomy_name.strains_tax_PNU.class.Gammaproteobacteria",prob=TRUE)
+
+plot1 <- ls %>%
+  select(X.taxonomy_name.strains_tax_PNU.class.Gammaproteobacteria, yhat) %>%
+  na.omit() %>%
+  ggplot() +
+  geom_line(aes(x = X.taxonomy_name.strains_tax_PNU.class.Gammaproteobacteria, y = yhat),color="red") +
+  # ylim(0.,1) +
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+plot2 <- Train %>%
+  select(X.taxonomy_name.strains_tax_PNU.class.Gammaproteobacteria) %>%
+  na.omit() %>%
+  ggplot(aes(X.taxonomy_name.strains_tax_PNU.class.Gammaproteobacteria)) +
+  geom_histogram(fill="lightblue") +
+  scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+
+  theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# 
+p1 <- add_sub(plot1," ")
+p2 <- add_sub(plot2,"Class Gammaproteobacteria",size=12)
+
+aligned <- align_plots(p1, p2, align = "v")
+Gamma<- ggdraw()+
+  draw_plot(aligned[[2]])+
+  draw_plot(aligned[[1]],
+            scale = scale)
+
+# ### Epsilonproteobacteria
+ls<-partial(gbmtest,n.trees=best.iter, "X.taxonomy_name.strains_tax_PNU.class.Epsilonproteobacteria",prob=TRUE)
+
+plot1 <- ls %>%
+  select(X.taxonomy_name.strains_tax_PNU.class.Epsilonproteobacteria, yhat) %>%
+  na.omit() %>%
+  ggplot() +
+  geom_line(aes(x = X.taxonomy_name.strains_tax_PNU.class.Epsilonproteobacteria, y = yhat),color="red") +
+  # ylim(0.,1) +
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+plot2 <- Train %>%
+  select(X.taxonomy_name.strains_tax_PNU.class.Epsilonproteobacteria) %>%
+  na.omit() %>%
+  ggplot(aes(X.taxonomy_name.strains_tax_PNU.class.Epsilonproteobacteria)) +
+  geom_histogram(fill="lightblue") +
+  scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+
+  theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# 
+p1 <- add_sub(plot1," ")
+p2 <- add_sub(plot2,"Class Epsilonproteobacteria",size=12)
+
+aligned <- align_plots(p1, p2, align = "v")
+Epsilon<- ggdraw()+
+  draw_plot(aligned[[2]])+
+  draw_plot(aligned[[1]],
+            scale = scale)
+
+# ### hemolysis gamma
+ls<-partial(gbmtest,n.trees=best.iter, "X.morphology_physiology.colony_morphology.hemolysis_type.gamma",prob=TRUE)
+
+plot1 <- ls %>%
+  select(X.morphology_physiology.colony_morphology.hemolysis_type.gamma, yhat) %>%
+  na.omit() %>%
+  ggplot() +
+  geom_line(aes(x = X.morphology_physiology.colony_morphology.hemolysis_type.gamma, y = yhat),color="red") +
+  # ylim(0.,1) +
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+plot2 <- Train %>%
+  select(X.morphology_physiology.colony_morphology.hemolysis_type.gamma) %>%
+  na.omit() %>%
+  ggplot(aes(X.morphology_physiology.colony_morphology.hemolysis_type.gamma)) +
+  geom_histogram(fill="lightblue") +
+  scale_y_continuous(position="right",breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))+
+  ylab(" ") +
+  theme_minimal() +
+  theme(axis.title.x = element_blank())+
+  theme(plot.margin=unit(c(0,0,0,1.25),"cm"))
+# 
+p1 <- add_sub(plot1," ")
+p2 <- add_sub(plot2,"hemolysis gamma",size=12)
+
+aligned <- align_plots(p1, p2, align = "v")
+hemolysis_gamma<- ggdraw()+
+  draw_plot(aligned[[2]])+
+  draw_plot(aligned[[1]],
+            scale = scale)
+
+grid.arrange(pls,#animal
+             gc,#gc
+             alpha_class,
+             beta,
+             Epsilon,
+             Gamma,
+             hu,#human
+             hemolysis_gamma,
+             cell_length,
+             ncol=3,
+             left = textGrob("Model output probabilities", rot = 90, vjust = 1),right = textGrob("Frequency", rot = 270, vjust = 1))
+#psy,#psychrophilic
+#th,#thermophilic
+#cell_length,#cell_len
+
+
+```
+
+###get data for well-covered fields for one phylum, Actinobacteria
+#include pathogenicity plant
+#include latitude, longitude
+#does not include colony length
+#does not include hemolysis type, flagellum_arrangement
+```{r}
+load("Data from Backdive-2.RData")
+threshold = 0.01
+D = merge
+D = unique(D)
+#rm(merge)
+#remove NA values
+inds.na = which(!is.na(D$value))
+D = D[inds.na,]
+
+D_phylum = subset(D, field == "phylum")
+D_sub = subset(D_phylum, value == "Actinobacteria")
+
+id_len=length(unique(D_sub$bacdive_id))
+
+bacdive_tmp = D_sub$bacdive_id
+
+D_sub_all = subset(D, bacdive_id %in% bacdive_tmp)#get all in this phylum based on bacdive_ids
+
+D = D_sub_all
+D$new_field = paste(D$section, D$subsection, D$field)
+save(D, file = "DATA/PROCESSED/D_Actinobacteria.Rdata")
+count=as.data.frame(table(D$new_field))#combination of subsection and field
+var1=count$Var1
+freq=count$Freq
+var<-list()
+freqs<-list()
+for (i in 1:length(freq)) {
+  if (freq[i]>=threshold*id_len) {#this will get fields greater than 1%
+    var[[i]]=var1[i]
+    freqs[[i]]=freq[i]
+  }
+}
+
+df=do.call(rbind, Map(data.frame, Feature_name=var, Frequency=freqs))
+
+df$Fraction = df$Frequency/id_len
+
+###get those seen at least 1% of time
+df01 = subset(df, Fraction >= 0.01)
+save(df01, file = "DATA/PROCESSED/df01_Actinobacteria.Rdata")
+
+merge01 = subset(D, new_field %in% df01$Feature_name)
+save(merge01, file = "DATA/PROCESSED/merge01_Actinobacteria.Rdata")
+
+##this part is data_processing.R @
+df <- merge01
+
+df <- unique(df)
+
+df$feature_name <- paste(df$section, df$subsection, df$field)
+
+a <- df[is.element(df$feature_name, df01$Feature_name),]#df01 for 1% threshold
+
+q <- dcast(a, bacdive_id~feature_name)
+q <- q[order(q$bacdive_id),]
+
+write.csv(q, file = "df_Actinobacteria.csv", row.names = F)
+temp = read.csv("df_Actinobacteria.csv")
+dim(temp)
+dim(q)
+#str(q)
+
+#str(q, list.len=ncol(q))
+
+write.csv(names(q), "Actinobacteria_names.csv")
+q$`molecular_biology GC_content GC_content`=as.character(q$`molecular_biology GC_content GC_content`)
+
+na_temp_range = which(is.na(q$`culture_growth_condition culture_temp temperature_range`))
+q$`culture_growth_condition culture_temp temperature_range`[na_temp_range]=
+  q$`culture_growth_condition culture_temp temperature_range1`[na_temp_range]
+
+q$`molecular_biology GC_content GC_content`= as.character(q$`molecular_biology GC_content GC_content`)
+
+#fix GC content
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$`molecular_biology GC_content GC_content`[a])){
+    if (grepl("±", q$`molecular_biology GC_content GC_content`[a])==TRUE){
+      split = strsplit(q$`molecular_biology GC_content GC_content`[a], "±")
+      q$`molecular_biology GC_content GC_content`[a] =as.numeric(split[[1]][1])
+    }
+    length_char = str_length(q$`molecular_biology GC_content GC_content`[a])
+    if (length_char > 4){
+      split = strsplit(q$`molecular_biology GC_content GC_content`[a], "-")
+      q$`molecular_biology GC_content GC_content`[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+    
+  }
+}
+
+#fix morphology_physiology cell_morphology cell_len
+q$`morphology_physiology cell_morphology cell_len`=as.character(q$`morphology_physiology cell_morphology cell_len`)
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$`morphology_physiology cell_morphology cell_len`[a])){
+    q$`morphology_physiology cell_morphology cell_len`[a]=str_replace(q$`morphology_physiology cell_morphology cell_len`[a],
+                                                                      pattern = ">",
+                                                                      replacement = "")
+    q$`morphology_physiology cell_morphology cell_len`[a]=str_replace(q$`morphology_physiology cell_morphology cell_len`[a],
+                                                                      pattern = "<",
+                                                                      replacement = "")
+    grep_test = grepl("-", q$`morphology_physiology cell_morphology cell_len`[a])
+    if (grep_test == TRUE){
+      split = strsplit(q$`morphology_physiology cell_morphology cell_len`[a], "-")
+      q$`morphology_physiology cell_morphology cell_len`[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+  }
+}
+q$`morphology_physiology cell_morphology cell_len`=as.numeric(q$`morphology_physiology cell_morphology cell_len`)
+inds = which(q$`morphology_physiology cell_morphology cell_len_unit` == "mm")
+q$`morphology_physiology cell_morphology cell_len`[inds]=q$`morphology_physiology cell_morphology cell_len`[inds]*1000
+
+##now change into log
+q$`morphology_physiology cell_morphology cell_len log`=log(q$`morphology_physiology cell_morphology cell_len`)
+rm = c("morphology_physiology cell_morphology cell_len")
+keep = setdiff(names(q), rm)
+q = q[,keep]
+
+#fix morphology_physiology cell_morphology cell_width
+q$`morphology_physiology cell_morphology cell_width`=as.character(q$`morphology_physiology cell_morphology cell_width`)
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$`morphology_physiology cell_morphology cell_width`[a])){
+    q$`morphology_physiology cell_morphology cell_width`[a]=str_replace(q$`morphology_physiology cell_morphology cell_width`[a],
+                                                                        pattern = ">",
+                                                                        replacement = "")
+    q$`morphology_physiology cell_morphology cell_width`[a]=str_replace(q$`morphology_physiology cell_morphology cell_width`[a],
+                                                                        pattern = "<",
+                                                                        replacement = "")
+    grep_test = grepl("-", q$`morphology_physiology cell_morphology cell_width`[a])
+    if (grep_test == TRUE){
+      split = strsplit(q$`morphology_physiology cell_morphology cell_width`[a], "-")
+      q$`morphology_physiology cell_morphology cell_width`[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+  }
+}
+q$`morphology_physiology cell_morphology cell_width`=as.numeric(q$`morphology_physiology cell_morphology cell_width`)
+inds = which(q$`morphology_physiology cell_morphology cell_width_unit` == "mm")
+q$`morphology_physiology cell_morphology cell_width`[inds] = 1000*q$`morphology_physiology cell_morphology cell_width`[inds]
+
+##now change into log
+q$`morphology_physiology cell_morphology cell_width log`=log(q$`morphology_physiology cell_morphology cell_width`)
+rm = c("morphology_physiology cell_morphology cell_width")
+keep = setdiff(names(q), rm)
+q = q[,keep]
+
+#unique(q$morphology_physiology colony_morphology incubation_period)
+q$`morphology_physiology colony_morphology incubation_period`=as.character(q$`morphology_physiology colony_morphology incubation_period`)
+for (a in 1:dim(q)[1]){
+  if(!is.na(q$`morphology_physiology colony_morphology incubation_period`[a])){
+    q$`morphology_physiology colony_morphology incubation_period`[a]=str_replace(q$`morphology_physiology colony_morphology incubation_period`[a],
+                                                                                 pattern = ">",
+                                                                                 replacement = "")
+    q$`morphology_physiology colony_morphology incubation_period`[a]=str_replace(q$`morphology_physiology colony_morphology incubation_period`[a],
+                                                                                 pattern = "<",
+                                                                                 replacement = "")
+    
+    q$`morphology_physiology colony_morphology incubation_period`[a]=str_replace(q$`morphology_physiology colony_morphology incubation_period`[a],
+                                                                                 pattern = "days",
+                                                                                 replacement = "")
+    
+    grep_test = grepl("-", q$`morphology_physiology colony_morphology incubation_period`[a])
+    if (grep_test == TRUE){
+      split = strsplit(q$`morphology_physiology colony_morphology incubation_period`[a], "-")
+      q$`morphology_physiology colony_morphology incubation_period`[a] =(as.numeric(split[[1]][2])+as.numeric(split[[1]][1]))/2
+    }
+  }
+}
+q$`morphology_physiology colony_morphology incubation_period`=as.numeric(q$`morphology_physiology colony_morphology incubation_period`)
+
+
+q$`molecular_biology GC_content GC_content`= as.numeric(q$`molecular_biology GC_content GC_content`)
+
+keep = c(
+  #"application_interaction risk_assessment biosafety_level",
+  "molecular_biology GC_content GC_content",
+  "taxonomy_name strains_tax_PNU species",
+  "culture_growth_condition culture_temp temperature_range",
+  # "environment_sampling_isolation_source origin continent",#hard to interpret biologically
+  # "taxonomy_name strains_tax_PNU phylum",
+  "environment_sampling_isolation_source origin latitude",
+  "environment_sampling_isolation_source origin longitude",
+  "morphology_physiology spore_formation type",
+  # "morphology_physiology oxygen_tolerance oxygen_tol",#this has multiple entries, tol1, tol2. 
+  #"morphology_physiology met_test metabolite_test",#don't know what this means
+  #"morphology_physiology met_production metabolite_prod",#don't know what this means
+  #"morphology_physiology met_antibiotica metabolite_antib",#don't know what this means
+  #"morphology_physiology halophily salt_concentration",#FIXED to make numeric  Includes >, <  This is relative to multiple possible measures -- growth, optimum  discard  
+  #"morphology_physiology met_antibiotica ab_resistance_conc",#don't know what this means  Seems to refer to concentration of antibiotic in test  Exclude  
+  #"morphology_physiology colony_morphology colony_len",#not in Actinobacteria
+  "morphology_physiology colony_morphology hemolysis_type",#don't know what this means. 
+  "morphology_physiology cell_morphology motility",#factor
+  "morphology_physiology cell_morphology gram_stain",#factor
+  # "morphology_physiology cell_morphology flagellum_arrangement",#factor; does not seem to be present for Actinobacteria
+  "morphology_physiology cell_morphology cell_len log",#FIXED to make numeric  assumning all in same units
+  "morphology_physiology cell_morphology cell_shape",#factor
+  "morphology_physiology cell_morphology cell_width log",#need to FIX to make numeric 
+  # "culture_growth_condition culture_temp temp",#need to FIX to make numeric; refers to growth vs  optimum; exclude
+  # "culture_growth_condition culture_pH pH",
+  "morphology_physiology spore_formation ability",
+  "taxonomy_name strains ordo",
+  "application_interaction risk_assessment pathogenicity_animal",
+  "application_interaction risk_assessment pathogenicity_plant",
+  "application_interaction risk_assessment pathogenicity_human",
+  "bacdive_id",
+  "environment_sampling_isolation_source origin sample_type",
+  "morphology_physiology cell_morphology gram_stain",
+  "taxonomy_name strains_tax_PNU class",
+  "morphology_physiology spore_formation type",
+  "morphology_physiology colony_morphology colony_shape")
+keep = intersect(names(q), keep)
+q = q[,keep]
+
+q$`environment_sampling_isolation_source origin longitude`=as.numeric(as.character(q$`environment_sampling_isolation_source origin longitude`))
+
+q$`environment_sampling_isolation_source origin latitude`=as.numeric(as.character(q$`environment_sampling_isolation_source origin latitude`))
+
+# q$`morphology_physiology colony_morphology colony_len`=as.numeric(as.character(q$`morphology_physiology colony_morphology colony_len`))
+save(q, file = "q_Actinobacteria Rdata")
+load("q_Actinobacteria Rdata")
+bacteria_traits_fields_subset = q
+write.csv(bacteria_traits_fields_subset, file = "bacteria_traits_fields_subset_Actinobacteria.csv", 
+          row.names = FALSE)
+#fix animal pathogenic
+inds = which(!is.na(q$`application_interaction risk_assessment pathogenicity_animal`))
+q$`application_interaction risk_assessment pathogenicity_animal`[inds]="1"
+
+inds.na = which(is.na(q$`application_interaction risk_assessment pathogenicity_animal`))
+q$`application_interaction risk_assessment pathogenicity_animal`[inds.na]="0"
+q$`application_interaction risk_assessment pathogenicity_animal`=as.numeric(q$`application_interaction risk_assessment pathogenicity_animal`)
+
+# q$`application_interaction risk_assessment pathogenicity_animal`[is.na(q$`application_interaction risk_assessment pathogenicity_animal`)]=0
+# q$`application_interaction risk_assessment pathogenicity_animal`[!is.na(q$`application_interaction risk_assessment pathogenicity_animal`)]=1
+
+#fix human pathogenic
+inds = which(!is.na(q$`application_interaction risk_assessment pathogenicity_human`))
+q$`application_interaction risk_assessment pathogenicity_human`[inds]="1"
+
+inds.na = which(is.na(q$`application_interaction risk_assessment pathogenicity_human`))
+q$`application_interaction risk_assessment pathogenicity_human`[inds.na]="0"
+q$`application_interaction risk_assessment pathogenicity_human`=as.numeric(q$`application_interaction risk_assessment pathogenicity_human`)
+
+
+#fix plant pathogenic
+inds = which(!is.na(q$`application_interaction risk_assessment pathogenicity_plant`))
+q$`application_interaction risk_assessment pathogenicity_plant`[inds]="1"
+
+inds.na = which(is.na(q$`application_interaction risk_assessment pathogenicity_plant`))
+q$`application_interaction risk_assessment pathogenicity_plant`[inds.na]="0"
+q$`application_interaction risk_assessment pathogenicity_plant`=as.numeric(q$`application_interaction risk_assessment pathogenicity_plant`)
+
+
+# q$`application_interaction risk_assessment pathogenicity_human`[is.na(q$`application_interaction risk_assessment pathogenicity_human`)]=0
+# q$`application_interaction risk_assessment pathogenicity_human`[!is.na(q$`application_interaction risk_assessment pathogenicity_human`)]=1
+summary(q$`application_interaction risk_assessment pathogenicity_human`)
+q$human_origin = grepl("human", q$`environment_sampling_isolation_source origin sample_type`)
+q$human_origin[q$human_origin==FALSE]=0
+q$human_origin[q$human_origin==TRUE]=1
+rm = c("bacdive_id",
+       "taxonomy_name strains_tax_PNU species",
+       "environment_sampling_isolation_source origin sample_type")
+keep = setdiff(names(q), rm)
+q = q[,keep]
+
+# q$`application_interaction risk_assessment biosafety_level`=factor(q$`application_interaction risk_assessment biosafety_level`)
+q$`application_interaction risk_assessment pathogenicity_animal`=as.numeric(q$`application_interaction risk_assessment pathogenicity_animal`)
+q$`culture_growth_condition culture_temp temp`=as.numeric(q$`culture_growth_condition culture_temp temp`)
+# q$`environment_sampling_isolation_source origin continent`=factor(q$`environment_sampling_isolation_source origin continent`)
+q$`morphology_physiology cell_morphology cell_shape`=factor(q$`morphology_physiology cell_morphology cell_shape`)
+q$`morphology_physiology cell_morphology gram_stain`=factor(q$`morphology_physiology cell_morphology gram_stain`)
+q$`morphology_physiology cell_morphology motility`=factor(q$`morphology_physiology cell_morphology motility`)
+# q$`morphology_physiology oxygen_tolerance oxygen_tol`=factor(q$`morphology_physiology oxygen_tolerance oxygen_tol`)
+q$`morphology_physiology spore_formation ability`=factor(q$`morphology_physiology spore_formation ability`)
+q$`taxonomy_name strains ordo`=factor(q$`taxonomy_name strains ordo`)
+q_Actinobacteria = q
+
+rm = c("culture_growth_condition culture_temp temp",
+       "taxonomy_name strains ordo")
+
+keep = setdiff(names(q), rm)
+q = q[,keep]
+
+q$`taxonomy_name strains_tax_PNU class` = factor(q$`taxonomy_name strains_tax_PNU class`)
+# q$`morphology_physiology colony_morphology hemolysis_type` = factor(q$`morphology_physiology colony_morphology hemolysis_type`)
+q$`morphology_physiology colony_morphology colony_shape` = factor(q$`morphology_physiology colony_morphology colony_shape`)
+# q$`morphology_physiology cell_morphology flagellum_arrangement` = factor(q$`morphology_physiology cell_morphology flagellum_arrangement`)
+q$`culture_growth_condition culture_temp temperature_range` = factor(q$`culture_growth_condition culture_temp temperature_range`)
+
+
+save(q_Actinobacteria, file = "q_Actinobacteria.Rdata")
+dmy <- dummyVars(" ~ .", data = q,fullRank = F, sep=".")
+
+df_transformed <- data.frame(predict(dmy, newdata = q))
+save(df_transformed, file = "df_transformed_Actinobacteria.Rdata")
+write.csv(df_transformed, file = "onehotdata_Actinobacteria.csv", row.names = F)
+
 
 ```
 
 
-
-
-plotPartial example
+##make model--Actinobacteria
 ```{r}
-# Load required packages
-library(ggplot2)  # required to use autoplot
-library(randomForest)
+load("df_transformed_Actinobacteria.Rdata")
 
-# Fit a random forest to the Boston housing data
-data (boston)  # load the boston housing data
-set.seed(101)  # for reproducibility
-boston.rf <- randomForest(cmedv ~ ., data = boston)
+rm = "X.culture_growth_condition.culture_temp.temp."
+keep = setdiff(names(df_transformed), rm)
+df_transformed = df_transformed[,keep]
+y_col = 2
+x_col = c(1, 3:dim(df_transformed)[2])
 
-# Partial dependence of cmedv on lstat
-boston.rf %>%
-  partial(pred.var = "lstat") %>%
-  plotPartial(rug = TRUE, train = boston)
+model<-as.formula(paste(colnames(df_transformed)[y_col], "~",
+                        paste(colnames(df_transformed)[x_col],collapse = "+"),
+                        sep = ""))
+
 
 ```
 
-
-##use method JP sent,  but with partial rug
+##get train and test
 ```{r}
-# Create plots of marginal effects
-load("gbmtest.Rdata")
+load("df_transformed_Actinobacteria.Rdata")
+df = df_transformed
+
+DP =createDataPartition(y = df$X.application_interaction.risk_assessment.pathogenicity_human., 
+                        p = 0.8,
+                        list = FALSE)
+Train = df[DP,]
+Test = df[-DP,]
+
+save(Train, file = "Train.Rdata")
+save(Test, file = "Test.Rdata")
+
+```
+
+##fit gbm -- Actinobacteria
+```{r gbm}
 load("Train.Rdata")
-library("gbm")
-library("pdp")
+load("Test.Rdata")
+attach(Train)
+#Start the clock
+ptm<-proc.time()
 
-best.iter <- gbm.perf(gbmtest,method="cv",plot.it=FALSE) #this gives you the optimal number of trees based on cv performance, other methods will over or under predict
+n.trees = 100000
+shrinkage = 0.001#final version should be 0.001
+cv.folds = 10#final version should be 10
+gbmtest<- gbm(model,
+              data=Train,
+              distribution="bernoulli",
+              n.trees=n.trees,
+              shrinkage=shrinkage,
+              interaction.depth=3,
+              bag.fraction=0.50,
+              train.fraction=1,
+              n.minobsinnode=5,
+              cv.folds=cv.folds,
+              keep.data=TRUE,
+              verbose=TRUE,
+              n.cores=NULL)
 
-ls<-partial(gbmtest,n.trees=best.iter, "X.application_interaction.risk_assessment.pathogenicity_animal.",prob=TRUE,
-            rug=TRUE)
-plot1 <- plotPartial(ls, rug=TRUE, 
-            train=Train,
-            xlab = "pathogenicity to animals")
-
-ls1<-partial(gbmtest,n.trees=best.iter, "X.molecular_biology.GC_content.GC_content.",prob=TRUE,
-            rug=TRUE)
-plot2 <- plotPartial(ls1, rug=TRUE, 
-            train=Train,
-            xlab = "GC content")
-
-# combine plots
-grid.arrange(plot1, plot2, ncol=2)#,left = textGrob("Model output probabilities", rot = 90, vjust = 1),right = textGrob("Frequency", rot = 270, vjust = 1))
-
-```
-
-
-
-
-```{r}
-library(gbm)
-load("gbmtest.Rdata")
-load("Train.Rdata")
-
+save(gbmtest, file = "gbmtest_Actinobacteria.Rdata")
+#check performance using 5-fold cross-validation
 best.iter <- gbm.perf(gbmtest,method="cv",plot.it=FALSE) #this gives you the optimal number of trees based on cv performance, other methods will over or under predict
 print(best.iter)
 
-par(mfrow=c(2,3))
+gbm_error = data.frame(train.error = gbmtest$train.error,
+                       trees = seq(1,n.trees))
+plot <- ggplot(gbm_error, aes(x = trees, y = train.error))+
+  geom_line()
+plot
+ggsave(filename = "deviance_human_pathogenic_Firmicutes.jpg",
+       plot = plot)
+#Stop the clock
+(proc.time()-ptm)/60
 
-# 1. aridity
-par(mar=c(4.2,4.2,1,4.5))
-histGR<-hist(Train$X.application_interaction.risk_assessment.pathogenicity_animal.,xlab="Pathogenic to animal",
-             breaks=20,
-             main="",axes=FALSE,xaxs="i",border="white",col="light blue")
-axis(2,histGR$y)
-par(new=TRUE,ann=FALSE,yaxt="n")
-margGR<-plot(gbmtest,i.var="X.application_interaction.risk_assessment.pathogenicity_animal.",best.iter,lwd=1.5)
-par(yaxt="s")
-axis(4,margGR$y)
+load("gbmtest_Actinobacteria.Rdata")
+best.iter <- gbm.perf(gbmtest,method="cv",plot.it=FALSE) #this gives you the optimal number of trees based on cv performance, other methods 
+# output predictions on the TRAINING SET
+output<-predict(gbmtest, 
+                newdata=Train, 
+                n.trees=best.iter, 
+                type="response") 
 
-###this generates two separate plots
-# histGR<-hist(Train$X.application_interaction.risk_assessment.pathogenicity_animal.)
-# par(new=TRUE, ann =FALSE, yaxt="n")
-# margGR<-plot(gbmtest,i.var="X.application_interaction.risk_assessment.pathogenicity_animal.",best.iter,lwd=1.5)
-# par(yaxt="s")
-# axis(4,margGR$y)
+output<-cbind(output,Train$X.application_interaction.risk_assessment.pathogenicity_human.)
+colnames(output)<-c("output","data")
+rownames(output)<-rownames(Train)
+output<-output[order(-output[,1]),]
+
+# # AUC for Bernoulli distributed responses
+par(mar = c(1,1,1,1))
+auc=colAUC(output[,1],output[,2],
+           plotROC = TRUE)
+
+print(auc)
+pred<-prediction(output[,1],output[,2])
+perf<-performance(pred,"tpr","fpr")
+
+par(mar = c(1,1,1,1))
+plot(perf,colorize=TRUE,main="ROC full model")
+abline(a=0, b= 1)
+
+# output predictions on the Test SET
+output<-predict(gbmtest,
+                newdata=Test,
+                n.trees=best.iter,
+                type="response")
+
+
+output<-cbind(output,Test$X.application_interaction.risk_assessment.pathogenicity_human.)
+colnames(output)<-c("output","data")
+rownames(output)<-rownames(Test)
+output<-output[order(-output[,1]),]
+
+# # AUC for Bernoulli distributed responses
+par(mar = c(1,1,1,1))
+auc=colAUC(output[,1],output[,2],
+           plotROC = TRUE)
+
+print(auc)
+pred<-prediction(output[,1],output[,2])
+perf<-performance(pred,"tpr","fpr")
+
+par(mar = c(1,1,1,1))
+plot(perf,colorize=TRUE,main="ROC full model test data")
+abline(a=0, b= 1)
+
 
 ```
 
-
-
-###iml example
+##Bootstrap permutations -- AUC -- Actinobacteria
 ```{r}
-data("Boston", package  = "MASS")
-head(Boston)
+load("df_transformed_Actinobacteria.Rdata")
+rm = c("X.culture_growth_condition.culture_temp.temp.")
+keep = setdiff(names(df_transformed), rm)
+df_transformed= df_transformed[, keep]
+#Start the clock
+ptm<-proc.time()
+
+permutedAUC<-c()
+word = "Actinobacteria"
+best.iter.list = c()
+
+
+i=1
+while (i <= 50) {
+  # for permutation loop
+  
+  ## random permutation of Label
+  randomLabel<-sample(df_transformed$X.application_interaction.risk_assessment.pathogenicity_human.)
+  
+  pan2<-cbind(randomLabel,df_transformed)
+  #remove previous label
+  rm = "X.application_interaction.risk_assessment.pathogenicity_human."
+  keep = setdiff(names(pan2),rm)
+  pan2 = pan2[,keep]
+  
+  pan2[,1]<-sapply(pan2[,1],as.character)
+  
+  ## create training and test sets
+  intrain2<-createDataPartition(y=pan2$randomLabel,
+                                p=0.8,
+                                list=FALSE)
+  
+  test2<-pan2[-intrain2,]
+  training2<-pan2[intrain2,]
+  
+  check<-1-is.na(training2)*1
+  checksum<-apply(check,2,sum)
+  ncols = dim(training2)[2]
+  if(length(which(checksum>=2))==ncols){#this makes sure we don't get any columns with all zeros. Should be == to the number of columns
+    
+    
+    ## random permutation of Labels ~ traits
+    y_col = 1
+    x_col = c(2:dim(pan2)[2])
+    
+    model<-as.formula(paste(colnames(pan2)[y_col], "~",
+                            paste(colnames(pan2)[x_col],collapse = "+"),
+                            sep = ""))
+    
+    
+    # model2<-as.formula(paste(colnames(pan2)[1], "~",
+    #                          paste(traits$Predictor,collapse = "+"), #traits
+    #                          collapse="+"))
+    gbm2<- gbm(model,
+               data=training2, 
+               distribution="bernoulli",
+               n.trees=40000,
+               shrinkage=0.001,
+               interaction.depth=3,
+               bag.fraction=0.50,
+               train.fraction=1,
+               n.minobsinnode=3,
+               cv.folds=10,
+               keep.data=TRUE)
+    # verbose=TRUE)
+    
+    #check performance using 5-fold cross-validation
+    best.iter2 <- gbm.perf(gbm2,method="cv",plot.it=FALSE) #OOB method under predicts
+    best.iter.list=c(best.iter.list, best.iter2)
+
+    ## LABEL
+    ## predictions on the TRAINING SET
+    output2<-predict(gbm2, newdata=training2, n.trees=best.iter2, type="response") 
+    output2<-cbind(output2,as.numeric(training2$randomLabel))
+    #   colnames(output2)<-c("output","label")
+    #   output2<-output2[order(-as.numeric(output2[,1])),]
+    
+    # # training AUC for Bernoulli distributed responses
+    auc2=colAUC(output2[,1],output2[,2])
+    
+    # Predictions on the TEST set
+    output.test2<-predict(gbm2, newdata=test2, n.trees=best.iter2, type="response") 
+    output.test2<-cbind(output.test2,as.numeric(test2$randomLabel))
+    # colnames(output.test2)<-c("output","label")
+    # output.test2<-output.test2[order(-output.test2[,1]),]
+    # plot(output.test)
+    
+    ## test AUC for Bernoulli distributed responses
+    auctest2=colAUC(output.test2[,1],output.test2[,2])
+    
+    permutedAUC[i]<-auctest2
+    print(auctest2)
+    i=i+1
+    print(i)#check where we are in bootstrap
+  } else i=i
+}
+
+sum(is.na(permutedAUC)*1) #how many NAs
+permutedAUC2<-na.omit(permutedAUC)
+mean(permutedAUC2)
+sd(permutedAUC2)
+
+#Stop the clock
+(proc.time()-ptm)/60
+write.csv(best.iter.list, file = paste0("best.iter.list.","AUC.", word, ".csv"))
 
 
 ```
 
+##Bootstrap permutations for distribution of relative influence  -- Actinobacteria
+```{r boot_relative_influence_Actinobacteria}
+#initialize list of fitted models
+list_save = list()
+
+word = "Actinobacteria"
+load("df_transformed_Actinobacteria.Rdata")
+rm = c("X.culture_growth_condition.culture_temp.temp.")
+keep = setdiff(names(df_transformed), rm)
+df_transformed = df_transformed[,keep]
+
+df = df_transformed
+#Start the clock
+ptm<-proc.time()
+
+permutedAUC<-c()
+n.trees = 40000
+best.iter.list = c()
+out = NULL
+i=1
+while (i <= 50) {
+  # for permutation loop
+  ## random permutation of Label
+  # randomLabel<-sample(df$case)
+  
+  # pan2<-cbind(randomLabel,df)
+  # #remove previous label
+  # rm = "case"
+  # keep = setdiff(names(pan2),rm)
+  # pan2 = pan2[,keep]
+  
+  # pan2[,1]<-sapply(pan2[,1],as.character)
+  
+  ## create training and test sets
+  pan2 = df
+  intrain2<-createDataPartition(y=pan2$X.application_interaction.risk_assessment.pathogenicity_human.,
+                                p=0.8,
+                                list=FALSE)
+    test2<-pan2[-intrain2,]
+
+  training2<-pan2[intrain2,]
+  
+  check<-1-is.na(training2)*1
+  checksum<-apply(check,2,sum)
+    n_cols = dim(training2)[2]
+
+  if(length(which(checksum>=2))==n_cols){#this makes sure we don't get any columns with all zeros. Should be == to the number of columns
+    
+    y_col = which(names(training2)=="X.application_interaction.risk_assessment.pathogenicity_human.")
+    x_col = seq(1:dim(training2)[2])
+    x_col = setdiff(x_col, y_col)
+
+    model<-as.formula(paste(colnames(pan2)[y_col], "~",
+                            paste(colnames(pan2)[x_col],collapse = "+"),
+                            sep = ""))
+    
+    gbm2<- gbm(model,
+               data=training2, 
+               distribution="bernoulli",
+               n.trees=40000,
+               shrinkage=0.001,
+               interaction.depth=3,
+               bag.fraction=0.50,
+               train.fraction=1,
+               n.minobsinnode=3,
+               cv.folds=10,
+               keep.data=TRUE)
+    
+    #save this gmb model
+list_save <- c(list_save, list(gbm2))
+
+    #get the relative influence info
+    x = summary(gbm2)
+    x.df= data.frame(variable = x$var,
+                     relative.influence = x$rel.inf)
+    
+    # x.df = subset(x.df, relative.influence >=1)
+    
+    x.df$variable = factor(x.df$variable, levels = x.df$variable[order(x.df$relative.influence)])
+    #save these results
+    out =  rbind(out, x.df)
+    
+    
+    #check performance using 5-fold cross-validation
+    best.iter2 <- gbm.perf(gbm2,method="cv",plot.it=FALSE) #OOB method under predicts
+    #   batsum2<-summary.gbm(gbm2,n.trees=best.iter,method=relative.influence,plotit=FALSE)
+    print(best.iter2)
+    best.iter.list=c(best.iter.list, best.iter2)
+    ## LABEL
+    ## predictions on the TRAINING SET
+    output2<-predict(gbm2, newdata=training2, n.trees=best.iter2, type="response") 
+    output2<-cbind(output2,as.numeric(training2$X.application_interaction.risk_assessment.pathogenicity_human.))
+    
+    # # training AUC for Bernoulli distributed responses
+    auc2=colAUC(output2[,1],output2[,2])
+    
+    # Predictions on the TEST set
+    output.test2<-predict(gbm2, newdata=test2, n.trees=best.iter2, type="response") 
+    output.test2<-cbind(output.test2,as.numeric(test2$X.application_interaction.risk_assessment.pathogenicity_human.))
+    # colnames(output.test2)<-c("output","label")
+    # output.test2<-output.test2[order(-output.test2[,1]),]
+    # plot(output.test)
+    
+    ## test AUC for Bernoulli distributed responses
+    auctest2=colAUC(output.test2[,1],output.test2[,2])
+    
+    permutedAUC[i]<-auctest2
+    print(auctest2)
+    i=i+1
+    print(i)#check where we are in bootstrap
+  } else i=i
+}
+
+#save list of fitted models
+save(list_save, file = "list_save_cases.Rdata")
+
+sum(is.na(permutedAUC)*1) #how many NAs
+permutedAUC2<-na.omit(permutedAUC)
+mean(permutedAUC2)
+sd(permutedAUC2)
+
+#Stop the clock
+(proc.time()-ptm)/60
+
+#summarize the relative influence data
+out_sum <- out %>% 
+  group_by(variable) %>%
+  summarize(mean_influence = mean(relative.influence)) %>%
+  filter(mean_influence>1)
+
+#get just the data for variables with mean influence greater than 1%
+out_high = subset(out, variable %in% out_sum$variable)
+
+save(out_high, file = "out_high.Rdata")
+ggplot(data = out_high, aes(x = variable, y =relative.influence))+
+  ylab("relative influence (%)")+
+  xlab("variable")+
+  geom_boxplot()+
+  coord_flip()
+
+ggsave("Figure.relative.influence.boxplot.Actinobacteria.jpg")
+
+write.csv(best.iter.list, file = paste0("best.iter.list.","observed.", word, ".csv"))
+
+```
 
 
-
-
-###5. Feature construction with bacterial traits
-
+###plot relative influence -- Proteobacteria
 ```{r}
+#format relative influence for figure
+load("gbmtest_Actinobacteria.Rdata")
+x = summary(gbmtest)
+# 
+x.df= data.frame(variable = x$var,
+                 relative.influence = x$rel.inf)
 
-# library(sjPlot)
+write.csv(x.df, file = "x.df.Proteobacteria.csv")
+x.df = subset(x.df, relative.influence>=1)#take only interesting variables
+
+x.df$variable = factor(x.df$variable, levels = x.df$variable[order(x.df$relative.influence)])
+save(x.df, file = "x.df.Rdata")
+ggplot(data = x.df, aes(x = variable, y =relative.influence))+
+  ylab("relative influence (%)")+
+  xlab("variable")+
+  geom_bar(stat="identity")+
+  coord_flip()
 # 
-# q <- read.csv(file = "dropnzvdata.csv")
-# num <- read.csv(file = "numeric_variables.csv")
-# 
-# cat_vars <- data.frame(
-# q$culture_growth_condition.culture_medium.medium_name,
-# q$culture_growth_condition.culture_medium.medium_name1,
-# q$culture_growth_condition.culture_medium.medium_name2,
-# q$culture_growth_condition.culture_temp.temperature_range,
-# q$environment_sampling_isolation_source.origin.continent,
-# q$environment_sampling_isolation_source.origin.country,
-# q$environment_sampling_isolation_source.origin.geo_loc_name,
-# q$environment_sampling_isolation_source.origin.sample_type,
-# q$molecular_biology.GC_content.GC_content,
-# q$molecular_biology.sequence.DB_sequence,
-# q$molecular_biology.sequence.DB_sequence1,
-# q$molecular_biology.sequence.DB_sequence2,
-# q$molecular_biology.sequence.seq_acc_num,
-# q$molecular_biology.sequence.seq_acc_num1,
-# q$molecular_biology.sequence.seq_acc_num2,
-# q$references.reference1.NA,
-# q$references.reference2.NA,
-# q$references.reference3.NA,
-# q$references.reference4.NA,
-# q$strain_availability.strain_history.history,
-# q$strain_availability.strains.strain_number,
-# q$taxonomy_name.strains.class,
-# q$taxonomy_name.strains.designation,
-# q$taxonomy_name.strains.family,
-# q$taxonomy_name.strains.full_scientific_name,
-# q$taxonomy_name.strains.genus,
-# q$taxonomy_name.strains.is_type_strain,
-# q$taxonomy_name.strains.ordo,
-# q$taxonomy_name.strains.phylum,
-# q$taxonomy_name.strains.species,
-# q$taxonomy_name.strains.species_epithet,
-# q$taxonomy_name.strains_synonyms_PNU.pnu_synonym,
-# q$taxonomy_name.strains_tax_PNU.class,
-# q$taxonomy_name.strains_tax_PNU.family,
-# q$taxonomy_name.strains_tax_PNU.full_scientific_name,
-# q$taxonomy_name.strains_tax_PNU.genus,
-# q$taxonomy_name.strains_tax_PNU.is_type_strain,
-# q$taxonomy_name.strains_tax_PNU.phylum,
-# q$taxonomy_name.strains_tax_PNU.species,
-# q$taxonomy_name.strains_tax_PNU.species_epithet,
-# q$taxonomy_name.strains_tax_PNU.status_gen,
-# q$taxonomy_name.strains_tax_PNU.status_spec)
-# 
-# df[] <- lapply(cat_vars,as.integer)
-# sjp.corr(df)
-# sjt.corr(df)
-# 
-# cmatrix <- matrix()
-# i = 1
-# j = 2
-# 
-# q <- cat_vars
-# while (i <= length(q) - 1) {
-#   while (j <= length(q)) {
-#     row1 <- colnames(q)[i]
-#     row2 <- colnames(q)[j]
-#     df <- q[!is.na(q[row1,]) & !is.na(q[row2],),]
-#     t <- table(df[row1,], df[row2],)
-#     cmatrix[i][j] <- chisq.test(t, correct = F)$p.value
-#     j = j+1
-#     print(i,j)
-#   }
-#   i = i+1
-# }
-# 
-# q <- read.csv(file = "dropnzvdata.csv", header=TRUE, sep=",", stringsAsFactors=FALSE)
-# 
-# num_vars <- data.frame(
-# q$application_interaction.risk_assessment.ID_reference,
-# q$culture_growth_condition.culture_medium.ID_reference,
-# q$culture_growth_condition.culture_medium.ID_reference1,
-# q$culture_growth_condition.culture_medium.ID_reference2,
-# q$culture_growth_condition.culture_temp.ID_reference,
-# q$culture_growth_condition.culture_temp.ID_reference1,
-# q$culture_growth_condition.culture_temp.ID_reference2,
-# q$environment_sampling_isolation_source.origin.ID_reference,
-# q$molecular_biology.GC_content.ID_reference,
-# q$molecular_biology.sequence.ID_reference,
-# q$references.ID_reference1.NA,
-# q$references.ID_reference2.NA,
-# q$references.ID_reference3.NA,
-# q$references.ID_reference4.NA,
-# q$strain_availability.strain_history.ID_reference,
-# q$strain_availability.straininfo_link.straininfo_strainnumber,
-# q$strain_availability.straininfo_link.straininfo_strainnumber1,
-# q$strain_availability.straininfo_link.straininfo_strainnumber2,
-# q$strain_availability.strains.ID_reference,
-# q$taxonomy_name.strains.ID_reference)
-# 
-# cor(num_vars)
+ggsave("Figure.relative.influence.Actinobacteria.jpg")
 
 ```
-
-###6. Data visualization: summary “state of knowledge” on bacteria causing disease in mammals or humans
-
-###7. Use traits to predict transmissibility and human disease outcomes
 
